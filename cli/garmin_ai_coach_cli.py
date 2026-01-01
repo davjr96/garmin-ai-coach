@@ -20,6 +20,7 @@ from services.ai.langgraph.workflows.planning_workflow import (
     run_complete_analysis_and_planning,
 )
 from services.ai.utils.plan_storage import FilePlanStorage
+from services.chatbot import AnalysisContextLoader, ChatbotService
 from services.garmin import ExtractionConfig, TriathlonCoachDataExtractor
 from services.outside.client import OutsideApiGraphQlClient
 
@@ -275,6 +276,92 @@ async def run_analysis_from_config(config_path: Path) -> None:
         raise
 
 
+def list_chat_sessions(config_path: Path) -> None:
+    """List all available chat sessions.
+
+    Args:
+        config_path: Path to configuration file (YAML or JSON)
+    """
+    from services.chatbot.conversation_manager import ConversationManager
+
+    config_parser = ConfigParser(config_path)
+    output_dir = config_parser.get_output_directory()
+
+    sessions = ConversationManager.list_sessions(output_dir)
+
+    if not sessions:
+        logger.info("No chat sessions found.")
+        return
+
+    print("\n" + "=" * 80)
+    print("Available Chat Sessions")
+    print("=" * 80)
+
+    for i, session in enumerate(sessions, 1):
+        print(f"\n{i}. Session ID: {session['id']}")
+        print(f"   Athlete: {session['athlete_name']}")
+        print(f"   Started: {session['started_at']}")
+        print(f"   Messages: {session['message_count']}")
+
+    print("\n" + "=" * 80)
+    print("\nTo resume a session, use:")
+    print("  pixi run coach-chat my_config.yaml --session <session_id>")
+    print("\nExample:")
+    if sessions:
+        print(f"  pixi run coach-chat my_config.yaml --session {sessions[0]['id']}\n")
+
+
+async def run_chatbot_from_config(
+    config_path: Path, resume: bool = False, session_id: str | None = None
+) -> None:
+    """Run interactive chatbot after analysis is complete.
+
+    Args:
+        config_path: Path to configuration file (YAML or JSON)
+        resume: If True, resume the most recent conversation
+        session_id: Specific session ID to resume
+    """
+    config_parser = ConfigParser(config_path)
+    athlete_name, email = config_parser.get_athlete_info()
+    output_dir = config_parser.get_output_directory()
+    extraction_settings = config_parser.get_extraction_config()
+
+    # Set AI mode for chatbot
+    os.environ["AI_MODE"] = extraction_settings.get("ai_mode", "development")
+    reload_config()
+    ai_settings.reload()
+
+    logger.info(f"🤖 Starting chatbot for {athlete_name}...")
+
+    # Validate analysis outputs exist
+    loader = AnalysisContextLoader(output_dir, user_id="cli_user")
+
+    if not loader.validate_outputs_exist():
+        logger.error("❌ No analysis outputs found. Run analysis first with --config")
+        logger.info("Required files: summary.json, season_plan.md, weekly_plan.md")
+        logger.info(f"Looking in: {output_dir}")
+        sys.exit(1)
+
+    # Load context
+    logger.info(f"Loading analysis from {output_dir}...")
+    try:
+        context = loader.load_context()
+    except Exception as e:
+        logger.error(f"❌ Failed to load analysis context: {e}")
+        sys.exit(1)
+
+    # Initialize and run chatbot
+    chatbot = ChatbotService(
+        context=context,
+        user_id="cli_user",
+        output_dir=output_dir,
+        resume=resume,
+        session_id=session_id,
+    )
+
+    await chatbot.run_interactive_loop()
+
+
 def create_config_template(output_path: Path) -> None:
     template_path = Path(__file__).parent / "coach_config_template.yaml"
 
@@ -295,13 +382,47 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--config", type=Path, help="Path to configuration file (YAML or JSON)")
     group.add_argument("--init-config", type=Path, help="Create a configuration template file")
+    group.add_argument(
+        "--chat", type=Path, help="Start chatbot with existing analysis (YAML or JSON config)"
+    )
+    group.add_argument(
+        "--list-sessions",
+        type=Path,
+        help="List all available chat sessions (YAML or JSON config)",
+    )
 
     parser.add_argument("--output-dir", type=Path, help="Override output directory from config")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume the most recent conversation (use with --chat)",
+    )
+    parser.add_argument(
+        "--session", type=str, help="Resume specific session by ID (use with --chat)"
+    )
 
     args = parser.parse_args()
 
     if args.init_config:
         create_config_template(args.init_config)
+        return
+
+    if args.list_sessions:
+        list_chat_sessions(args.list_sessions)
+        return
+
+    if args.chat:
+        try:
+            asyncio.run(
+                run_chatbot_from_config(
+                    args.chat, resume=args.resume, session_id=args.session
+                )
+            )
+        except KeyboardInterrupt:
+            logger.info("\n❌ Chat session ended by user")
+        except Exception as e:
+            logger.error(f"❌ Chatbot failed: {e}")
+            sys.exit(1)
         return
 
     if args.config:

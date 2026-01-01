@@ -13,6 +13,7 @@ class AgentRole(Enum):
     WORKOUT = "workout"
     SEASON_PLANNER = "season_planner"
     FORMATTER = "formatter"
+    CHATBOT = "chatbot"
 
 
 @dataclass
@@ -30,6 +31,7 @@ class AISettings:
                 AgentRole.SYNTHESIS: "gpt-5",
                 AgentRole.WORKOUT: "gpt-5",
                 AgentRole.SEASON_PLANNER: "gpt-5",
+                AgentRole.CHATBOT: "gpt-5",
             },
             AIMode.COST_EFFECTIVE: {
                 AgentRole.SUMMARIZER: "claude-3-haiku",
@@ -40,6 +42,7 @@ class AISettings:
                 AgentRole.SYNTHESIS: "claude-3-haiku",
                 AgentRole.WORKOUT: "claude-3-haiku",
                 AgentRole.SEASON_PLANNER: "claude-3-haiku",
+                AgentRole.CHATBOT: "claude-3-haiku",
             },
             AIMode.DEVELOPMENT: {
                 AgentRole.SUMMARIZER: "claude-4",
@@ -50,6 +53,7 @@ class AISettings:
                 AgentRole.SYNTHESIS: "claude-4",
                 AgentRole.WORKOUT: "claude-4",
                 AgentRole.SEASON_PLANNER: "claude-4",
+                AgentRole.CHATBOT: "claude-4",
             },
         }
     )
