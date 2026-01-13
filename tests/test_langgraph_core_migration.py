@@ -2,7 +2,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from services.ai.langgraph.state.training_analysis_state import create_initial_state
+from services.ai.langgraph.state.training_analysis_state import \
+    create_initial_state
 
 
 @pytest.fixture
@@ -16,13 +17,19 @@ def basic_test_state():
 
 
 def test_all_nodes_importable():
-    from services.ai.langgraph.nodes.activity_expert_node import activity_expert_node
-    from services.ai.langgraph.nodes.activity_summarizer_node import activity_summarizer_node
+    from services.ai.langgraph.nodes.activity_expert_node import \
+        activity_expert_node
+    from services.ai.langgraph.nodes.activity_summarizer_node import \
+        activity_summarizer_node
     from services.ai.langgraph.nodes.formatter_node import formatter_node
-    from services.ai.langgraph.nodes.metrics_expert_node import metrics_expert_node
-    from services.ai.langgraph.nodes.metrics_summarizer_node import metrics_summarizer_node
-    from services.ai.langgraph.nodes.physiology_expert_node import physiology_expert_node
-    from services.ai.langgraph.nodes.physiology_summarizer_node import physiology_summarizer_node
+    from services.ai.langgraph.nodes.metrics_expert_node import \
+        metrics_expert_node
+    from services.ai.langgraph.nodes.metrics_summarizer_node import \
+        metrics_summarizer_node
+    from services.ai.langgraph.nodes.physiology_expert_node import \
+        physiology_expert_node
+    from services.ai.langgraph.nodes.physiology_summarizer_node import \
+        physiology_summarizer_node
     from services.ai.langgraph.nodes.synthesis_node import synthesis_node
 
     assert callable(metrics_summarizer_node)
@@ -37,7 +44,8 @@ def test_all_nodes_importable():
 
 @patch("services.ai.langgraph.config.langsmith_config.LangSmithConfig.setup_langsmith")
 def test_complete_workflow_creation(mock_langsmith):
-    from services.ai.langgraph.workflows.analysis_workflow import create_analysis_workflow
+    from services.ai.langgraph.workflows.analysis_workflow import \
+        create_analysis_workflow
 
     workflow_app = create_analysis_workflow()
     assert workflow_app is not None
@@ -74,7 +82,8 @@ def test_state_schema_completeness():
 @pytest.mark.asyncio
 @patch("services.ai.model_config.ModelSelector.get_llm")
 async def test_node_basic_functionality(mock_get_llm, basic_test_state):
-    from services.ai.langgraph.nodes.activity_summarizer_node import activity_summarizer_node
+    from services.ai.langgraph.nodes.activity_summarizer_node import \
+        activity_summarizer_node
 
     mock_llm = AsyncMock()
     mock_response = Mock()
@@ -102,9 +111,7 @@ def test_workflow_structure_stability():
     try:
         with patch("services.ai.langgraph.config.langsmith_config.LangSmithConfig.setup_langsmith"):
             from services.ai.langgraph.workflows.analysis_workflow import (
-                create_analysis_workflow,
-                create_simple_sequential_workflow,
-            )
+                create_analysis_workflow, create_simple_sequential_workflow)
 
             parallel_workflow = create_analysis_workflow()
             sequential_workflow = create_simple_sequential_workflow()

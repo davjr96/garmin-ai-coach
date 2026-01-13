@@ -3,7 +3,8 @@ from datetime import datetime
 
 from services.ai.ai_settings import AgentRole
 from services.ai.model_config import ModelSelector
-from services.ai.utils.retry_handler import AI_ANALYSIS_CONFIG, retry_with_backoff
+from services.ai.utils.retry_handler import (AI_ANALYSIS_CONFIG,
+                                             retry_with_backoff)
 
 from ..state.training_analysis_state import TrainingAnalysisState
 from .tool_calling_helper import extract_text_content
@@ -56,14 +57,19 @@ async def formatter_node(state: TrainingAnalysisState) -> dict[str, list | str]:
 
         async def call_html_formatting():
             synthesis_result = extract_text_content(state.get("synthesis_result", ""))
-            
-            response = await ModelSelector.get_llm(AgentRole.FORMATTER).ainvoke([
-                {"role": "system", "content": FORMATTER_SYSTEM_PROMPT},
-                {"role": "user", "content": (
-                    FORMATTER_USER_PROMPT_BASE.format(synthesis_result=synthesis_result)
-                    + (FORMATTER_PLOT_INSTRUCTIONS if plotting_enabled else "")
-                )},
-            ])
+
+            response = await ModelSelector.get_llm(AgentRole.FORMATTER).ainvoke(
+                [
+                    {"role": "system", "content": FORMATTER_SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": (
+                            FORMATTER_USER_PROMPT_BASE.format(synthesis_result=synthesis_result)
+                            + (FORMATTER_PLOT_INSTRUCTIONS if plotting_enabled else "")
+                        ),
+                    },
+                ]
+            )
             return extract_text_content(response)
 
         analysis_html = await retry_with_backoff(
@@ -75,11 +81,13 @@ async def formatter_node(state: TrainingAnalysisState) -> dict[str, list | str]:
 
         return {
             "analysis_html": analysis_html,
-            "costs": [{
-                "agent": "formatter",
-                "execution_time": execution_time,
-                "timestamp": datetime.now().isoformat(),
-            }],
+            "costs": [
+                {
+                    "agent": "formatter",
+                    "execution_time": execution_time,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ],
         }
 
     except Exception as e:

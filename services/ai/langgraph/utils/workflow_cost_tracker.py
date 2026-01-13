@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from .langsmith_cost_extractor import LangSmithCostExtractor, WorkflowCostSummary
+from .langsmith_cost_extractor import (LangSmithCostExtractor,
+                                       WorkflowCostSummary)
 
 logger = logging.getLogger(__name__)
 

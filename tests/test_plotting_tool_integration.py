@@ -1,6 +1,7 @@
 import pytest
 
-from services.ai.tools.plotting.langgraph_plotting_tool import create_plotting_tools
+from services.ai.tools.plotting.langgraph_plotting_tool import \
+    create_plotting_tools
 from services.ai.tools.plotting.plot_storage import PlotStorage
 
 
@@ -50,7 +51,7 @@ fig.update_layout(title='Test Plot')
         mock_llm_with_tools = Mock()
         mock_llm_with_tools.kwargs = {"tools": [plotting_tool]}
         mock_llm.bind_tools.return_value = mock_llm_with_tools
-        
+
         monkeypatch.setattr(ModelSelector, "get_llm", lambda role: mock_llm)
 
         llm = ModelSelector.get_llm(AgentRole.METRICS_EXPERT)
@@ -94,7 +95,8 @@ fig.update_layout(title='Test Plot')
         tool_node = ToolNode(tools)
         assert tool_node is not None
 
-        from services.ai.langgraph.state.training_analysis_state import TrainingAnalysisState
+        from services.ai.langgraph.state.training_analysis_state import \
+            TrainingAnalysisState
 
         workflow = StateGraph(TrainingAnalysisState)
         assert workflow is not None

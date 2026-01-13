@@ -3,10 +3,9 @@ from unittest.mock import Mock
 import pytest
 
 from services.ai.langgraph.utils.langsmith_cost_extractor import (
-    NodeCostSummary,
-    WorkflowCostSummary,
-)
-from services.ai.langgraph.utils.workflow_cost_tracker import WorkflowCostTracker
+    NodeCostSummary, WorkflowCostSummary)
+from services.ai.langgraph.utils.workflow_cost_tracker import \
+    WorkflowCostTracker
 
 
 @pytest.fixture
@@ -47,8 +46,13 @@ class TestWorkflowCostSummary:
         assert summary.total_cost_usd == 0.005
         assert summary.total_tokens == 350
         assert len(summary.node_costs) == 2
-        assert next(node for node in summary.node_costs if node.name == "metrics_node").cost_usd == 0.002
-        assert next(node for node in summary.node_costs if node.name == "metrics_node").tokens == 150
+        assert (
+            next(node for node in summary.node_costs if node.name == "metrics_node").cost_usd
+            == 0.002
+        )
+        assert (
+            next(node for node in summary.node_costs if node.name == "metrics_node").tokens == 150
+        )
 
     def test_node_cost_summary_attributes(self):
         node = NodeCostSummary(
@@ -128,7 +132,8 @@ class TestLangSmithCostExtractorFallback:
     def test_extract_workflow_costs_no_client(self):
         import os
 
-        from services.ai.langgraph.utils.langsmith_cost_extractor import LangSmithCostExtractor
+        from services.ai.langgraph.utils.langsmith_cost_extractor import \
+            LangSmithCostExtractor
 
         original_key = os.environ.get("LANGSMITH_API_KEY")
         if "LANGSMITH_API_KEY" in os.environ:

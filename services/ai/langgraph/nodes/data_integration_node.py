@@ -14,11 +14,13 @@ async def data_integration_node(state: TrainingAnalysisState) -> dict[str, list]
         agent_start_time = datetime.now()
 
         data_available = [
-            name for name, key in [
+            name
+            for name, key in [
                 ("metrics analysis", "metrics_outputs"),
                 ("activity analysis", "activity_outputs"),
-                ("physiology analysis", "physiology_outputs")
-            ] if state.get(key)
+                ("physiology analysis", "physiology_outputs"),
+            ]
+            if state.get(key)
         ]
 
         logger.info(
@@ -30,11 +32,13 @@ async def data_integration_node(state: TrainingAnalysisState) -> dict[str, list]
 
         return {
             "season_plan_complete": True,
-            "costs": [{
-                "agent": "data_integration",
-                "execution_time": execution_time,
-                "timestamp": datetime.now().isoformat(),
-            }],
+            "costs": [
+                {
+                    "agent": "data_integration",
+                    "execution_time": execution_time,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ],
         }
 
     except Exception as e:

@@ -9,12 +9,12 @@ AgentType = Literal[
     "activity",
     "synthesis",
     "season_planner",
-    "weekly_planner"
+    "weekly_planner",
 ]
 
 
 def get_workflow_context(agent_type: AgentType) -> str:
-    
+
     # Summarizer agents
     if agent_type in ["metrics_summarizer", "physiology_summarizer", "activity_summarizer"]:
         domain = agent_type.replace("_summarizer", "")
@@ -49,7 +49,9 @@ You are the **Synthesis Agent**.
 
     # Planner agents
     elif agent_type in ["season_planner", "weekly_planner"]:
-        timeframe = "12-24 week strategy" if agent_type == "season_planner" else "next 28-day workouts"
+        timeframe = (
+            "12-24 week strategy" if agent_type == "season_planner" else "next 28-day workouts"
+        )
         return f"""
 ## System Role
 You are the **{agent_type.replace('_', ' ').title()}**.

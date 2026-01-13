@@ -4,17 +4,14 @@ from datetime import datetime
 
 from services.ai.ai_settings import AgentRole
 from services.ai.model_config import ModelSelector
-from services.ai.utils.retry_handler import AI_ANALYSIS_CONFIG, retry_with_backoff
+from services.ai.utils.retry_handler import (AI_ANALYSIS_CONFIG,
+                                             retry_with_backoff)
 
 from ..schemas import AgentOutput
 from ..state.training_analysis_state import TrainingAnalysisState
 from ..utils.output_helper import extract_agent_content, extract_expert_output
-from .node_base import (
-    configure_node_tools,
-    create_cost_entry,
-    execute_node_with_error_handling,
-    log_node_completion,
-)
+from .node_base import (configure_node_tools, create_cost_entry,
+                        execute_node_with_error_handling, log_node_completion)
 from .prompt_components import get_hitl_instructions, get_workflow_context
 from .tool_calling_helper import handle_tool_calling_in_node
 
@@ -55,6 +52,7 @@ Translate the Season Plan strategy and Expert signals into concrete daily sessio
 - **Respect Readiness**: Adjust intensity based on Physiology/Metrics signals (e.g., pull back if recovery is low).
 - **Integrate Signals**: Use Activity Expert advice for session structure.
 - **Brevity**: Use standard notation (e.g., "4x(5' Z4, 2' r)") to keep the plan compact.
+- **Altitude Adaptation**: If acclimatization data shows ACCLIMATIZING status or <100% acclimatization, reduce intensity targets and allow more recovery between hard sessions.
 
 ## Output Requirements
 1. **Zones Table**: Define intensity zones first.
@@ -78,7 +76,7 @@ async def weekly_planner_node(state: TrainingAnalysisState) -> dict[str, list | 
 
     hitl_enabled = state.get("hitl_enabled", True)
     logger.info(f"Weekly planner node: HITL {'enabled' if hitl_enabled else 'disabled'}")
-    
+
     agent_start_time = datetime.now()
 
     tools = configure_node_tools(
@@ -88,11 +86,11 @@ async def weekly_planner_node(state: TrainingAnalysisState) -> dict[str, list | 
     )
 
     system_prompt = (
-        WEEKLY_PLANNER_SYSTEM_PROMPT +
-        get_workflow_context("weekly_planner") +
-        (get_hitl_instructions("weekly_planner") if hitl_enabled else "")
+        WEEKLY_PLANNER_SYSTEM_PROMPT
+        + get_workflow_context("weekly_planner")
+        + (get_hitl_instructions("weekly_planner") if hitl_enabled else "")
     )
-    
+
     qa_messages_raw = state.get("weekly_planner_messages", [])
     qa_messages = []
     for msg in qa_messages_raw:
@@ -101,21 +99,30 @@ async def weekly_planner_node(state: TrainingAnalysisState) -> dict[str, list | 
             qa_messages.append({"role": role, "content": msg.content})
         else:
             qa_messages.append(msg)
-    
-    user_message = {"role": "user", "content": WEEKLY_PLANNER_USER_PROMPT.format(
-        season_plan=extract_agent_content(state.get("season_plan")),
-        athlete_name=state["athlete_name"],
-        current_date=json.dumps(state["current_date"], indent=2),
-        week_dates=json.dumps(state["week_dates"], indent=2),
-        competitions=json.dumps(state["competitions"], indent=2),
-        planning_context=state["planning_context"],
-        metrics_analysis=extract_expert_output(state.get("metrics_outputs"), "for_weekly_planner"),
-        activity_analysis=extract_expert_output(state.get("activity_outputs"), "for_weekly_planner"),
-        physiology_analysis=extract_expert_output(state.get("physiology_outputs"), "for_weekly_planner"),
-    )}
-    
+
+    user_message = {
+        "role": "user",
+        "content": WEEKLY_PLANNER_USER_PROMPT.format(
+            season_plan=extract_agent_content(state.get("season_plan")),
+            athlete_name=state["athlete_name"],
+            current_date=json.dumps(state["current_date"], indent=2),
+            week_dates=json.dumps(state["week_dates"], indent=2),
+            competitions=json.dumps(state["competitions"], indent=2),
+            planning_context=state["planning_context"],
+            metrics_analysis=extract_expert_output(
+                state.get("metrics_outputs"), "for_weekly_planner"
+            ),
+            activity_analysis=extract_expert_output(
+                state.get("activity_outputs"), "for_weekly_planner"
+            ),
+            physiology_analysis=extract_expert_output(
+                state.get("physiology_outputs"), "for_weekly_planner"
+            ),
+        ),
+    }
+
     base_messages = [{"role": "system", "content": system_prompt}, user_message]
-    
+
     base_llm = ModelSelector.get_llm(AgentRole.WORKOUT)
     llm_with_tools = base_llm.bind_tools(tools) if tools else base_llm
     llm_with_structure = llm_with_tools.with_structured_output(AgentOutput)

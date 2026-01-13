@@ -76,11 +76,15 @@ class GarminConnectClient:
                 status = getattr(getattr(http_err, "response", None), "status_code", None)
                 body = getattr(http_err.response, "text", "")
                 if status in (401, 403):
-                    logger.info("Token resume rejected by server (%s). Performing fresh login", status)
+                    logger.info(
+                        "Token resume rejected by server (%s). Performing fresh login", status
+                    )
                     self._fresh_login(email, password, mfa_callback)
                     self._client.login(tokenstore=str(self._token_dir))
                 else:
-                    logger.error("Garmin client login HTTP error: %s; body=%s", http_err, body[:500])
+                    logger.error(
+                        "Garmin client login HTTP error: %s; body=%s", http_err, body[:500]
+                    )
                     raise
             try:
                 if hasattr(self._client, "get_full_name"):
@@ -99,6 +103,32 @@ class GarminConnectClient:
     @property
     def client(self) -> Garmin | None:
         return self._client
+
+    def get_heat_altitude_acclimatization(self, start_date: str, end_date: str) -> dict | None:
+        """
+        Get heat and altitude acclimatization data for a date range.
+
+        Args:
+            start_date: Start date in ISO format (YYYY-MM-DD)
+            end_date: End date in ISO format (YYYY-MM-DD)
+
+        Returns:
+            Dict containing heat and altitude acclimatization metrics, or None on error
+        """
+        if not self._client:
+            logger.error("Cannot fetch heat/altitude acclimatization: client not connected")
+            return None
+
+        try:
+            url = f"/metrics-service/metrics/heataltitudeacclimation/daily/{start_date}/{end_date}"
+            logger.info(
+                "Fetching heat/altitude acclimatization from %s to %s", start_date, end_date
+            )
+            data = self._client.connectapi(url)
+            return data
+        except Exception as exc:
+            logger.exception("Failed to fetch heat/altitude acclimatization data: %s", exc)
+            return None
 
     def disconnect(self) -> None:
         if self._client:

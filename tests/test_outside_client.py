@@ -6,15 +6,9 @@ import httpx
 import pytest
 
 from services.outside.client import OutsideApiGraphQlClient
-from services.outside.models import (
-    CalendarNode,
-    CalendarResult,
-    Event,
-    EventCategory,
-    EventType,
-    PageInfo,
-    SanctioningBody,
-)
+from services.outside.models import (CalendarNode, CalendarResult, Event,
+                                     EventCategory, EventType, PageInfo,
+                                     SanctioningBody)
 
 
 @pytest.mark.unit
@@ -93,7 +87,9 @@ class TestOutsideApiGraphQlClient:
             return httpx.Response(
                 200,
                 request=httpx.Request("POST", url),
-                content=json_module.dumps({"errors": [{"message": "Something went wrong"}]}).encode("utf-8")
+                content=json_module.dumps({"errors": [{"message": "Something went wrong"}]}).encode(
+                    "utf-8"
+                ),
             )
 
         monkeypatch.setattr(client._client, "post", fake_post)
@@ -110,7 +106,9 @@ class TestOutsideApiGraphQlClient:
             return httpx.Response(
                 400,
                 request=httpx.Request("POST", url),
-                content=json_module.dumps({"errors": [{"message": "Bad variable for appType"}]}).encode("utf-8")
+                content=json_module.dumps(
+                    {"errors": [{"message": "Bad variable for appType"}]}
+                ).encode("utf-8"),
             )
 
         monkeypatch.setattr(client._client, "post", fake_post)
@@ -244,10 +242,12 @@ class TestOutsideApiGraphQlClient:
         monkeypatch.setattr(client, "get_event", fake_get_event)
         monkeypatch.setattr(client, "get_event_by_url", fake_get_event_by_url)
 
-        competitions = client.get_competitions([
-            {"id": 1, "priority": "A", "target_time": "3:00:00"},
-            {"url": "https://www.runreg.com/abc"},
-        ])
+        competitions = client.get_competitions(
+            [
+                {"id": 1, "priority": "A", "target_time": "3:00:00"},
+                {"url": "https://www.runreg.com/abc"},
+            ]
+        )
 
         assert len(competitions) == 2
 
@@ -319,11 +319,13 @@ class TestOutsideApiGraphQlClient:
         )
 
         root_client = OutsideApiGraphQlClient()
-        competitions = root_client.get_competitions({
-            "bikereg": [{"id": 1}],
-            "runreg": [{"url": "https://www.runreg.com/foo"}],
-            "unknown": [{"id": 123}],
-        })
+        competitions = root_client.get_competitions(
+            {
+                "bikereg": [{"id": 1}],
+                "runreg": [{"url": "https://www.runreg.com/foo"}],
+                "unknown": [{"id": 123}],
+            }
+        )
         assert len(competitions) == 2
         assert sorted([comp["name"] for comp in competitions]) == ["BIKEREG-ID-1", "RUNREG-URL"]
 
@@ -453,7 +455,9 @@ class TestOutsideApiGraphQlClient:
         def bad_provider(event_id: int) -> list[EventCategory]:
             raise RuntimeError("boom")
 
-        event = client._map_event(event_node, categories_provider=bad_provider, precache_categories=True)
+        event = client._map_event(
+            event_node, categories_provider=bad_provider, precache_categories=True
+        )
         assert isinstance(event, Event)
         assert event.event_id == 556
         assert event.categories == []
@@ -520,7 +524,9 @@ class TestOutsideApiGraphQlClient:
             "longitude": 0.0,
             "eventTypes": [],
         }
-        monkeypatch.setattr(client, "_gql", lambda query, variables: {"athleticEventByURL": event_node})
+        monkeypatch.setattr(
+            client, "_gql", lambda query, variables: {"athleticEventByURL": event_node}
+        )
         event = client.get_event_by_url("https://example.com/e/124")
         assert isinstance(event, Event)
         assert event.event_id == 124
@@ -540,7 +546,11 @@ class TestOutsideApiGraphQlClient:
                 "raceDates": ["2026-01-02"],
             }
         ]
-        monkeypatch.setattr(client, "_gql", lambda query, variables: {"athleticEvent": {"categories": categories_data}})
+        monkeypatch.setattr(
+            client,
+            "_gql",
+            lambda query, variables: {"athleticEvent": {"categories": categories_data}},
+        )
         categories = client.get_event_categories(700)
         assert len(categories) == 1
         assert isinstance(categories[0], EventCategory)
@@ -595,7 +605,9 @@ class TestOutsideApiGraphQlClient:
             },
             "not-a-dict",
         ]
-        monkeypatch.setattr(client, "_gql", lambda query, variables: {"athleticEventTypes": event_types_data})
+        monkeypatch.setattr(
+            client, "_gql", lambda query, variables: {"athleticEventTypes": event_types_data}
+        )
         event_types = client.get_event_types([1, 2])
         assert len(event_types) == 1
         assert isinstance(event_types[0], EventType)
@@ -604,7 +616,11 @@ class TestOutsideApiGraphQlClient:
     def test_get_sanctioning_bodies_filters_and_maps(self, monkeypatch):
         client = OutsideApiGraphQlClient()
         sanctioning_bodies_data = [{"id": 77, "name": "USAC", "appType": "BIKEREG"}, 42]
-        monkeypatch.setattr(client, "_gql", lambda query, variables: {"ARegSanctioningBodies": sanctioning_bodies_data})
+        monkeypatch.setattr(
+            client,
+            "_gql",
+            lambda query, variables: {"ARegSanctioningBodies": sanctioning_bodies_data},
+        )
         sanctioning_bodies = client.get_sanctioning_bodies()
         assert len(sanctioning_bodies) == 1
         assert isinstance(sanctioning_bodies[0], SanctioningBody)
@@ -686,7 +702,9 @@ class TestOutsideApiGraphQlClient:
         client = OutsideApiGraphQlClient()
 
         def fake_get_event(event_id: int, precache: bool = True) -> Event:
-            return self._make_event(event_id=event_id, date=None, event_end_date=None, categories=[])
+            return self._make_event(
+                event_id=event_id, date=None, event_end_date=None, categories=[]
+            )
 
         monkeypatch.setattr(OutsideApiGraphQlClient, "get_event", staticmethod(fake_get_event))
         competitions = client.get_competitions([{"id": 1}])
@@ -884,12 +902,16 @@ class TestOutsideApiGraphQlClient:
         def provider_raises(event_id: int):
             raise RuntimeError("cat-fail")
 
-        event = self._make_event(event_id=5, date=None, event_end_date=dt(2026, 9, 1), categories=None)
+        event = self._make_event(
+            event_id=5, date=None, event_end_date=dt(2026, 9, 1), categories=None
+        )
         object.__setattr__(event, "_categories_cache", None)
         object.__setattr__(event, "_categories_provider", provider_raises)
 
         monkeypatch.setattr(
-            OutsideApiGraphQlClient, "get_event", staticmethod(lambda event_id, precache=True: event)
+            OutsideApiGraphQlClient,
+            "get_event",
+            staticmethod(lambda event_id, precache=True: event),
         )
         competitions = client.get_competitions([{"id": 5}])
         assert competitions[0]["date"] == "2026-09-01"
@@ -907,7 +929,9 @@ class TestOutsideApiGraphQlClient:
         object.__setattr__(event, "_categories_provider", provider_raises)
 
         monkeypatch.setattr(
-            OutsideApiGraphQlClient, "get_event", staticmethod(lambda event_id, precache=True: event)
+            OutsideApiGraphQlClient,
+            "get_event",
+            staticmethod(lambda event_id, precache=True: event),
         )
         competitions = client.get_competitions([{"id": 6}])
         assert competitions[0]["race_type"] == "TypeX"

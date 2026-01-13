@@ -5,8 +5,10 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from services.ai.langgraph.nodes.metrics_expert_node import metrics_expert_node
-from services.ai.langgraph.state.training_analysis_state import create_initial_state
-from services.ai.langgraph.workflows.analysis_workflow import create_analysis_workflow
+from services.ai.langgraph.state.training_analysis_state import \
+    create_initial_state
+from services.ai.langgraph.workflows.analysis_workflow import \
+    create_analysis_workflow
 
 
 @pytest.fixture
@@ -25,7 +27,7 @@ def sample_state(sample_garmin_data):
         athlete_name="Test Athlete",
         garmin_data=sample_garmin_data,
         execution_id="test_exec_123",
-        plotting_enabled=True
+        plotting_enabled=True,
     )
 
 
@@ -71,7 +73,7 @@ async def test_metrics_expert_node_basic(mock_retry, mock_plot_storage, mock_get
     mock_storage = Mock()
     mock_storage.get_all_plots.return_value = {}
     mock_plot_storage.return_value = mock_storage
-    
+
     sample_state["metrics_summary"] = "Test metrics summary"
 
     result = await metrics_expert_node(sample_state)

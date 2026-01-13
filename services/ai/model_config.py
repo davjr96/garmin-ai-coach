@@ -63,9 +63,7 @@ class ModelSelector:
             name="google/gemini-2.5-pro", base_url="https://openrouter.ai/api/v1"
         ),
         # xAI Models (via OpenRouter)
-        "grok-4": ModelConfiguration(
-            name="x-ai/grok-4", base_url="https://openrouter.ai/api/v1"
-        ),
+        "grok-4": ModelConfiguration(name="x-ai/grok-4", base_url="https://openrouter.ai/api/v1"),
     }
 
     @classmethod
@@ -73,17 +71,20 @@ class ModelSelector:
         model_name = ai_settings.get_model_for_role(role)
         model_config = cls.CONFIGURATIONS[model_name]
         config = get_config()
-        
+
         api_key_map = {
             "anthropic": config.anthropic_api_key,
             "openrouter": config.openrouter_api_key,
         }
-        api_key = next((api_key_map[k] for k in api_key_map if k in model_config.base_url), config.openai_api_key)
+        api_key = next(
+            (api_key_map[k] for k in api_key_map if k in model_config.base_url),
+            config.openai_api_key,
+        )
 
         logger.info(f"Configuring LLM for role {role.value} with model {model_config.name}")
 
         llm_params = {"model": model_config.name, "api_key": api_key}
-        
+
         model_configs = {
             "claude-opus-thinking": {
                 "max_tokens": 32000,
@@ -120,7 +121,7 @@ class ModelSelector:
                 "log": "Using DeepSeek V3.2 Exp with reasoning enabled for {role}",
             },
         }
-        
+
         if model_name in model_configs:
             config_data = model_configs[model_name]
             log_msg = config_data.pop("log", None)
@@ -130,6 +131,6 @@ class ModelSelector:
 
         if "anthropic" in model_config.base_url:
             return ChatAnthropic(**llm_params)
-        
+
         llm_params["base_url"] = model_config.base_url
         return ChatOpenAI(**llm_params)

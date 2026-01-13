@@ -1,4 +1,3 @@
-
 import os
 from dataclasses import dataclass
 
@@ -12,10 +11,12 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
+
 class AIMode(Enum):
     STANDARD = "standard"
     COST_EFFECTIVE = "cost_effective"
     DEVELOPMENT = "development"
+
 
 @dataclass
 class Config:
@@ -23,7 +24,7 @@ class Config:
     openai_api_key: str | None = None
     deepseek_api_key: str | None = None
     openrouter_api_key: str | None = None
-    
+
     # AI configuration
     ai_mode: AIMode = AIMode.STANDARD
 
@@ -33,7 +34,7 @@ class Config:
         openai_api_key = os.getenv('OPENAI_API_KEY')
         deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
         openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-        
+
         # Get AI mode configuration
         ai_mode_str = os.getenv('AI_MODE', 'standard').lower()
         try:
@@ -55,6 +56,7 @@ class Config:
             deepseek_api_key=deepseek_api_key,
             openrouter_api_key=openrouter_api_key,
         )
+
 
 def get_config() -> Config:
     if not hasattr(get_config, '_config'):

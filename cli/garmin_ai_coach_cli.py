@@ -16,9 +16,8 @@ import yaml
 
 from core.config import reload_config
 from services.ai.ai_settings import ai_settings
-from services.ai.langgraph.workflows.planning_workflow import (
-    run_complete_analysis_and_planning,
-)
+from services.ai.langgraph.workflows.planning_workflow import \
+    run_complete_analysis_and_planning
 from services.ai.utils.plan_storage import FilePlanStorage
 from services.chatbot import AnalysisContextLoader, ChatbotService
 from services.garmin import ExtractionConfig, TriathlonCoachDataExtractor
@@ -61,7 +60,7 @@ class ConfigParser:
     def get_contexts(self) -> tuple[str, str]:
         return (
             self.config.get("context", {}).get("analysis", "").strip(),
-            self.config.get("context", {}).get("planning", "").strip()
+            self.config.get("context", {}).get("planning", "").strip(),
         )
 
     def get_extraction_config(self) -> dict[str, Any]:
@@ -91,9 +90,8 @@ class ConfigParser:
         return Path(self.config.get("output", {}).get("directory", "./data"))
 
     def get_password(self) -> str:
-        return (
-            self.config.get("credentials", {}).get("password", "") or
-            getpass.getpass("Enter Garmin Connect password: ")
+        return self.config.get("credentials", {}).get("password", "") or getpass.getpass(
+            "Enter Garmin Connect password: "
         )
 
 
@@ -139,13 +137,12 @@ async def run_analysis_from_config(config_path: Path) -> None:
     password = config_parser.get_password()
 
     os.environ["AI_MODE"] = extraction_settings.get("ai_mode", "development")
-    
+
     # Reload config and settings to pick up the new AI_MODE
     reload_config()
     ai_settings.reload()
-    
-    logger.info(f"AI Mode: {os.environ['AI_MODE']}")
 
+    logger.info(f"AI Mode: {os.environ['AI_MODE']}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -167,20 +164,22 @@ async def run_analysis_from_config(config_path: Path) -> None:
         plotting_enabled = extraction_settings.get("enable_plotting", False)
         hitl_enabled = extraction_settings.get("hitl_enabled", True)
         skip_synthesis = extraction_settings.get("skip_synthesis", False)
-        
+
         logger.info(f"Plotting enabled: {plotting_enabled}")
         logger.info(f"HITL enabled: {hitl_enabled}")
         logger.info(f"Skip synthesis: {skip_synthesis}")
-        
+
         current_date = {"date": now.strftime("%Y-%m-%d"), "day_name": now.strftime("%A")}
         week_dates = [
-            {"date": (now + timedelta(days=offset)).strftime("%Y-%m-%d"),
-             "day_name": (now + timedelta(days=offset)).strftime("%A")}
+            {
+                "date": (now + timedelta(days=offset)).strftime("%Y-%m-%d"),
+                "day_name": (now + timedelta(days=offset)).strftime("%A"),
+            }
             for offset in range(14)
         ]
-        
+
         logger.info("Running AI analysis and planning...")
-        
+
         result = await run_complete_analysis_and_planning(
             user_id="cli_user",
             athlete_name=athlete_name,
@@ -198,7 +197,7 @@ async def run_analysis_from_config(config_path: Path) -> None:
         logger.info("Saving results...")
 
         files_generated: list[str] = []
-        
+
         for filename, key in [
             ("analysis.html", "analysis_html"),
             ("planning.html", "planning_html"),
@@ -209,7 +208,7 @@ async def run_analysis_from_config(config_path: Path) -> None:
                 (output_dir / filename).write_text(content, encoding="utf-8")
                 files_generated.append(filename)
                 logger.info(f"Saved: {output_dir}/{filename}")
-        
+
         for filename, key in [
             ("metrics_expert.json", "metrics_outputs"),
             ("activity_expert.json", "activity_outputs"),
@@ -218,11 +217,11 @@ async def run_analysis_from_config(config_path: Path) -> None:
             if output := result.get(key):
                 (output_dir / filename).write_text(
                     json.dumps(output.model_dump(mode="json"), indent=2, ensure_ascii=False),
-                    encoding="utf-8"
+                    encoding="utf-8",
                 )
                 files_generated.append(filename)
                 logger.info(f"Saved: {output_dir}/{filename}")
-        
+
         for filename, key in [
             ("season_plan.md", "season_plan"),
             ("weekly_plan.md", "weekly_plan"),
@@ -233,7 +232,7 @@ async def run_analysis_from_config(config_path: Path) -> None:
                     (output_dir / filename).write_text(output, encoding="utf-8")
                     files_generated.append(filename)
                     logger.info(f"Saved: {output_dir}/{filename}")
-                    
+
                     # Also save to persistent storage
                     storage = FilePlanStorage()
                     plan_type = "season_plan" if key == "season_plan" else "weekly_plan"
@@ -242,28 +241,32 @@ async def run_analysis_from_config(config_path: Path) -> None:
                     storage.save_plan(user_id, plan_type, output)
 
         cost_total = float(
-            result.get("cost_summary", {}).get("total_cost_usd", 0.0) or
-            result.get("execution_metadata", {}).get("total_cost_usd", 0.0) or
-            sum(cost.get("total_cost", 0) for cost in result.get("costs", []))
+            result.get("cost_summary", {}).get("total_cost_usd", 0.0)
+            or result.get("execution_metadata", {}).get("total_cost_usd", 0.0)
+            or sum(cost.get("total_cost", 0) for cost in result.get("costs", []))
         )
         total_tokens = int(
-            result.get("cost_summary", {}).get("total_tokens", 0) or
-            result.get("execution_metadata", {}).get("total_tokens", 0)
+            result.get("cost_summary", {}).get("total_tokens", 0)
+            or result.get("execution_metadata", {}).get("total_tokens", 0)
         )
 
         (output_dir / "summary.json").write_text(
-            json.dumps({
-                "athlete": athlete_name,
-                "analysis_date": datetime.now().isoformat(),
-                "competitions": competitions,
-                "total_cost_usd": cost_total,
-                "total_tokens": total_tokens,
-                "execution_id": result.get("execution_id", ""),
-                "trace_id": result.get("execution_metadata", {}).get("trace_id", ""),
-                "root_run_id": result.get("execution_metadata", {}).get("root_run_id", ""),
-                "files_generated": files_generated,
-            }, indent=2, ensure_ascii=False),
-            encoding="utf-8"
+            json.dumps(
+                {
+                    "athlete": athlete_name,
+                    "analysis_date": datetime.now().isoformat(),
+                    "competitions": competitions,
+                    "total_cost_usd": cost_total,
+                    "total_tokens": total_tokens,
+                    "execution_id": result.get("execution_id", ""),
+                    "trace_id": result.get("execution_metadata", {}).get("trace_id", ""),
+                    "root_run_id": result.get("execution_metadata", {}).get("root_run_id", ""),
+                    "files_generated": files_generated,
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
         )
 
         logger.info("✅ Analysis completed successfully!")
@@ -414,9 +417,7 @@ def main():
     if args.chat:
         try:
             asyncio.run(
-                run_chatbot_from_config(
-                    args.chat, resume=args.resume, session_id=args.session
-                )
+                run_chatbot_from_config(args.chat, resume=args.resume, session_id=args.session)
             )
         except KeyboardInterrupt:
             logger.info("\n❌ Chat session ended by user")

@@ -151,6 +151,24 @@ class TrainingStatus:
 
 
 @dataclass
+class HeatAltitudeAcclimatization:
+    date: str | None = None
+    altitude_acclimatization: float | None = None  # Altitude in meters the body is acclimatized to
+    previous_altitude_acclimatization: float | None = None
+    heat_acclimatization_percentage: float | None = None
+    previous_heat_acclimatization_percentage: float | None = None
+    altitude_trend: str | None = None  # "ACCLIMATIZED", "ACCLIMATIZING", "DEACCLIMATIZING"
+    heat_trend: str | None = None
+    current_altitude: float | None = None  # Current altitude in meters
+    previous_altitude: float | None = None
+    acclimatization_percentage: float | None = (
+        None  # Progress towards full acclimatization (0-100%)
+    )
+    previous_acclimatization_percentage: float | None = None
+    altitude_acclimatization_timestamp: str | None = None
+
+
+@dataclass
 class GarminData:
     user_profile: UserProfile | None = None
     daily_stats: DailyStats | None = None
@@ -162,3 +180,4 @@ class GarminData:
     training_status: TrainingStatus | None = None
     vo2_max_history: dict[str, list[dict[str, Any]]] | None = None
     training_load_history: list[dict[str, Any]] | None = None
+    heat_altitude_acclimatization: list[HeatAltitudeAcclimatization] | None = None

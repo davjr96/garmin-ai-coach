@@ -5,9 +5,7 @@ import pytest
 
 from services.ai.langgraph.config.langsmith_config import LangSmithConfig
 from services.ai.langgraph.state.training_analysis_state import (
-    TrainingAnalysisState,
-    create_initial_state,
-)
+    TrainingAnalysisState, create_initial_state)
 
 
 class TestLangGraphFoundation:

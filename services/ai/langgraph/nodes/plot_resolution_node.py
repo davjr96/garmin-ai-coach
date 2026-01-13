@@ -64,9 +64,7 @@ async def plot_resolution_node(state: TrainingAnalysisState) -> dict[str, str | 
                 },
             }
 
-        logger.info(
-            f"About to resolve {validation_result['total_references']} plot references"
-        )
+        logger.info(f"About to resolve {validation_result['total_references']} plot references")
         logger.info(f"Available plots in storage: {list(plot_storage.plots.keys())}")
 
         for plot_id in validation_result["found_plots"]:
@@ -97,11 +95,13 @@ async def plot_resolution_node(state: TrainingAnalysisState) -> dict[str, str | 
                 "missing_plots": validation_result["missing_plots"],
                 "available_plots_summary": resolver.get_plot_summary(),
             },
-            "costs": [{
-                "agent": "plot_resolution",
-                "execution_time": 0.1,
-                "timestamp": datetime.now().isoformat(),
-            }],
+            "costs": [
+                {
+                    "agent": "plot_resolution",
+                    "execution_time": 0.1,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ],
         }
 
     except Exception as e:

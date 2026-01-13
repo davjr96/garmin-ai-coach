@@ -5,22 +5,17 @@ from datetime import datetime
 from services.ai.ai_settings import AgentRole
 from services.ai.model_config import ModelSelector
 from services.ai.tools.plotting import PlotStorage
-from services.ai.utils.retry_handler import AI_ANALYSIS_CONFIG, retry_with_backoff
+from services.ai.utils.retry_handler import (AI_ANALYSIS_CONFIG,
+                                             retry_with_backoff)
 
 from ..schemas import ActivityExpertOutputs
 from ..state.training_analysis_state import TrainingAnalysisState
-from .node_base import (
-    configure_node_tools,
-    create_cost_entry,
-    create_plot_entries,
-    execute_node_with_error_handling,
-    log_node_completion,
-)
-from .prompt_components import (
-    get_hitl_instructions,
-    get_plotting_instructions,
-    get_workflow_context,
-)
+from .node_base import (configure_node_tools, create_cost_entry,
+                        create_plot_entries, execute_node_with_error_handling,
+                        log_node_completion)
+from .prompt_components import (get_hitl_instructions,
+                                get_plotting_instructions,
+                                get_workflow_context)
 from .tool_calling_helper import handle_tool_calling_in_node
 
 logger = logging.getLogger(__name__)
@@ -78,7 +73,7 @@ async def activity_expert_node(state: TrainingAnalysisState) -> dict[str, list |
     plot_storage = PlotStorage(state["execution_id"])
     plotting_enabled = state.get("plotting_enabled", False)
     hitl_enabled = state.get("hitl_enabled", True)
-    
+
     logger.info(
         f"Activity expert node: Plotting {'enabled' if plotting_enabled else 'disabled'}, "
         f"HITL {'enabled' if hitl_enabled else 'disabled'}"
@@ -91,10 +86,10 @@ async def activity_expert_node(state: TrainingAnalysisState) -> dict[str, list |
     )
 
     system_prompt = (
-        ACTIVITY_EXPERT_SYSTEM_PROMPT_BASE +
-        get_workflow_context("activity") +
-        (get_plotting_instructions("activity") if plotting_enabled else "") +
-        (get_hitl_instructions("activity") if hitl_enabled else "")
+        ACTIVITY_EXPERT_SYSTEM_PROMPT_BASE
+        + get_workflow_context("activity")
+        + (get_plotting_instructions("activity") if plotting_enabled else "")
+        + (get_hitl_instructions("activity") if hitl_enabled else "")
     )
 
     base_llm = ModelSelector.get_llm(AgentRole.ACTIVITY_EXPERT)
@@ -112,17 +107,20 @@ async def activity_expert_node(state: TrainingAnalysisState) -> dict[str, list |
                 qa_messages.append({"role": role, "content": msg.content})
             else:  # Already a dict
                 qa_messages.append(msg)
-        
+
         base_messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": ACTIVITY_EXPERT_USER_PROMPT.format(
-                activity_summary=state.get("activity_summary", ""),
-                competitions=json.dumps(state["competitions"], indent=2),
-                current_date=json.dumps(state["current_date"], indent=2),
-                analysis_context=state["analysis_context"],
-            )},
+            {
+                "role": "user",
+                "content": ACTIVITY_EXPERT_USER_PROMPT.format(
+                    activity_summary=state.get("activity_summary", ""),
+                    competitions=json.dumps(state["competitions"], indent=2),
+                    current_date=json.dumps(state["current_date"], indent=2),
+                    analysis_context=state["analysis_context"],
+                ),
+            },
         ]
-        
+
         return await handle_tool_calling_in_node(
             llm_with_tools=llm_with_structure,
             messages=base_messages + qa_messages,
@@ -136,7 +134,9 @@ async def activity_expert_node(state: TrainingAnalysisState) -> dict[str, list |
         )
 
         execution_time = (datetime.now() - agent_start_time).total_seconds()
-        plots, plot_storage_data, available_plots = create_plot_entries("activity_expert", plot_storage)
+        plots, plot_storage_data, available_plots = create_plot_entries(
+            "activity_expert", plot_storage
+        )
 
         log_node_completion("Activity expert", execution_time, len(available_plots))
 

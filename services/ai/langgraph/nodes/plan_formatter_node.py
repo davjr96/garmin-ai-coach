@@ -3,7 +3,8 @@ from datetime import datetime
 
 from services.ai.ai_settings import AgentRole
 from services.ai.model_config import ModelSelector
-from services.ai.utils.retry_handler import AI_ANALYSIS_CONFIG, retry_with_backoff
+from services.ai.utils.retry_handler import (AI_ANALYSIS_CONFIG,
+                                             retry_with_backoff)
 
 from ..state.training_analysis_state import TrainingAnalysisState
 from .tool_calling_helper import extract_text_content
@@ -68,19 +69,26 @@ async def plan_formatter_node(state: TrainingAnalysisState) -> dict[str, list | 
                 output = value.output
                 if isinstance(output, str):
                     return output
-                raise ValueError("AgentOutput contains questions, not content. HITL interaction required.")
+                raise ValueError(
+                    "AgentOutput contains questions, not content. HITL interaction required."
+                )
             if isinstance(value, dict):
                 return value.get("output", value.get("content", value))
             return value
-        
+
         async def call_plan_formatting():
-            response = await ModelSelector.get_llm(AgentRole.FORMATTER).ainvoke([
-                {"role": "system", "content": PLAN_FORMATTER_SYSTEM_PROMPT},
-                {"role": "user", "content": PLAN_FORMATTER_USER_PROMPT.format(
-                    season_plan=get_content("season_plan"),
-                    weekly_plan=get_content("weekly_plan")
-                )},
-            ])
+            response = await ModelSelector.get_llm(AgentRole.FORMATTER).ainvoke(
+                [
+                    {"role": "system", "content": PLAN_FORMATTER_SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": PLAN_FORMATTER_USER_PROMPT.format(
+                            season_plan=get_content("season_plan"),
+                            weekly_plan=get_content("weekly_plan"),
+                        ),
+                    },
+                ]
+            )
             return extract_text_content(response)
 
         planning_html = await retry_with_backoff(
@@ -92,11 +100,13 @@ async def plan_formatter_node(state: TrainingAnalysisState) -> dict[str, list | 
 
         return {
             "planning_html": planning_html,
-            "costs": [{
-                "agent": "plan_formatter",
-                "execution_time": execution_time,
-                "timestamp": datetime.now().isoformat(),
-            }],
+            "costs": [
+                {
+                    "agent": "plan_formatter",
+                    "execution_time": execution_time,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ],
         }
 
     except Exception as e:

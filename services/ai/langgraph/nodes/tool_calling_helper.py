@@ -1,7 +1,6 @@
 import logging
 
 from langchain_core.messages import ToolMessage
-
 from langgraph.errors import GraphInterrupt
 
 logger = logging.getLogger(__name__)
@@ -16,29 +15,30 @@ def extract_text_content(response) -> str:
                 return "".join(text_parts)
         except Exception as e:
             logger.debug(f"Failed to extract from content_blocks: {e}")
-    
+
     content = response.content if hasattr(response, 'content') else response
-    
+
     if isinstance(content, str):
         return content
-    
+
     if isinstance(content, list):
         text_item = next(
-            (item["text"] for item in content
-             if isinstance(item, dict) and item.get("type") == "text" and "text" in item),
-            None
+            (
+                item["text"]
+                for item in content
+                if isinstance(item, dict) and item.get("type") == "text" and "text" in item
+            ),
+            None,
         )
         if text_item:
             return text_item
-        
+
         text_item = next(
-            (item["text"] for item in content
-             if isinstance(item, dict) and "text" in item),
-            None
+            (item["text"] for item in content if isinstance(item, dict) and "text" in item), None
         )
         if text_item:
             return text_item
-    
+
     return str(content)
 
 
@@ -47,7 +47,8 @@ async def handle_tool_calling_in_node(
 ):
     conversation = [
         {"role": msg["role"], "content": msg["content"]}
-        for msg in messages if msg["role"] in ("system", "user", "assistant")
+        for msg in messages
+        if msg["role"] in ("system", "user", "assistant")
     ]
 
     iteration = 0
@@ -70,9 +71,12 @@ async def handle_tool_calling_in_node(
                 logger.info(f"Executing tool: {tool_name}")
 
                 tool = next(
-                    (tool_candidate for tool_candidate in tools
-                     if hasattr(tool_candidate, "name") and tool_candidate.name == tool_name),
-                    None
+                    (
+                        tool_candidate
+                        for tool_candidate in tools
+                        if hasattr(tool_candidate, "name") and tool_candidate.name == tool_name
+                    ),
+                    None,
                 )
 
                 if tool is None:
@@ -91,7 +95,7 @@ async def handle_tool_calling_in_node(
                             tool_result = f"Unable to invoke tool {tool_name}"
 
                         logger.info(f"Tool {tool_name} executed successfully")
-                    
+
                     except GraphInterrupt:
                         logger.info(f"Tool {tool_name} triggered HITL interrupt - pausing workflow")
                         raise

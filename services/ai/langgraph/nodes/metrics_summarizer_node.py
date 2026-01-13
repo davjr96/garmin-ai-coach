@@ -9,6 +9,9 @@ def extract_metrics_data(state: TrainingAnalysisState) -> dict:
         "training_load_history": state["garmin_data"].get("training_load_history", []),
         "vo2_max_history": state["garmin_data"].get("vo2_max_history", {}),
         "training_status": state["garmin_data"].get("training_status", {}),
+        "heat_altitude_acclimatization": state["garmin_data"].get(
+            "heat_altitude_acclimatization", []
+        ),
     }
 
 

@@ -17,7 +17,8 @@ class LangGraphPlottingTool:
 
     def _count_agent_plots(self, agent_name: str) -> int:
         return sum(
-            1 for plot in self.plot_storage.list_available_plots()
+            1
+            for plot in self.plot_storage.list_available_plots()
             if plot.get("agent_name") == agent_name
         )
 
@@ -52,21 +53,21 @@ class LangGraphPlottingTool:
                     return {
                         "ok": False,
                         "error": f"Plot limit reached for agent '{self.agent_name}' ({agent_plot_count}/2 plots created)",
-                        "hint": "Consider: 1) Referencing existing plots using [PLOT:plot_id], 2) Incorporating insights into text, or 3) Combining insights into one comprehensive visualization."
+                        "hint": "Consider: 1) Referencing existing plots using [PLOT:plot_id], 2) Incorporating insights into text, or 3) Combining insights into one comprehensive visualization.",
                     }
 
                 if not python_code or not python_code.strip():
                     return {
                         "ok": False,
                         "error": "Missing required parameter 'python_code'",
-                        "hint": "Provide complete Python code with imports and a 'fig' variable. Example: import plotly.graph_objects as go; fig = go.Figure(); fig.add_trace(...)"
+                        "hint": "Provide complete Python code with imports and a 'fig' variable. Example: import plotly.graph_objects as go; fig = go.Figure(); fig.add_trace(...)",
                     }
 
                 if not description or not description.strip():
                     return {
                         "ok": False,
                         "error": "Missing required parameter 'description'",
-                        "hint": "Provide a brief description of what the plot shows (e.g., 'Training load analysis over time showing weekly progression')"
+                        "hint": "Provide a brief description of what the plot shows (e.g., 'Training load analysis over time showing weekly progression')",
                     }
 
                 logger.info(f"Agent {self.agent_name} executing plotting code")
@@ -77,17 +78,19 @@ class LangGraphPlottingTool:
                     return {
                         "ok": False,
                         "error": result['error'],
-                        "hint": "Check: 1) Syntax errors, 2) Import statements (import plotly.graph_objects as go), 3) 'fig' variable creation, 4) Date handling with datetime, 5) Data references"
+                        "hint": "Check: 1) Syntax errors, 2) Import statements (import plotly.graph_objects as go), 3) 'fig' variable creation, 4) Date handling with datetime, 5) Data references",
                     }
 
                 html_content = result["html"]
 
                 if not html_content:
-                    logger.error(f"Agent {self.agent_name} plot HTML conversion failed - no HTML content")
+                    logger.error(
+                        f"Agent {self.agent_name} plot HTML conversion failed - no HTML content"
+                    )
                     return {
                         "ok": False,
                         "error": "Failed to convert plot to HTML",
-                        "hint": "Ensure your code creates a 'fig' variable with a valid Plotly figure (use plotly.graph_objects or plotly.express)"
+                        "hint": "Ensure your code creates a 'fig' variable with a valid Plotly figure (use plotly.graph_objects or plotly.express)",
                     }
 
                 plot_id = self.plot_storage.store_plot(
@@ -101,11 +104,12 @@ class LangGraphPlottingTool:
                 return {
                     "ok": True,
                     "plot_id": plot_id,
-                    "message": f"Plot created successfully! Reference as [PLOT:{plot_id}]"
+                    "message": f"Plot created successfully! Reference as [PLOT:{plot_id}]",
                 }
 
             except Exception as e:
                 import traceback
+
                 logger.error(
                     f"Agent {self.agent_name} plotting failed: {e}\n\n"
                     f"Full traceback:\n{traceback.format_exc()}"
@@ -113,10 +117,11 @@ class LangGraphPlottingTool:
                 return {
                     "ok": False,
                     "error": str(e),
-                    "hint": "Runtime exception occurred. Check your code for errors and try again."
+                    "hint": "Runtime exception occurred. Check your code for errors and try again.",
                 }
 
         return python_plotting_tool
+
 
 def create_plotting_tools(plot_storage: PlotStorage, agent_name: str = "unknown"):
     langgraph_tool = LangGraphPlottingTool(plot_storage, agent_name)

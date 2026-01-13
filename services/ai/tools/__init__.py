@@ -1,8 +1,5 @@
-from .plotting import (
-    PlotReferenceResolver,
-    PlotStorage,
-    ProductionSecureExecutor,
-)
+from .plotting import (PlotReferenceResolver, PlotStorage,
+                       ProductionSecureExecutor)
 
 __all__ = [
     'PlotStorage',

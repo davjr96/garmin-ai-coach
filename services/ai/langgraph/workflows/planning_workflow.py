@@ -19,7 +19,8 @@ from ..nodes.plot_resolution_node import plot_resolution_node
 from ..nodes.season_planner_node import season_planner_node
 from ..nodes.synthesis_node import synthesis_node
 from ..nodes.weekly_planner_node import weekly_planner_node
-from ..state.training_analysis_state import TrainingAnalysisState, create_initial_state
+from ..state.training_analysis_state import (TrainingAnalysisState,
+                                             create_initial_state)
 from ..utils.workflow_cost_tracker import ProgressIntegratedCostTracker
 
 logger = logging.getLogger(__name__)
@@ -38,12 +39,12 @@ def create_planning_workflow():
 
     workflow.add_edge(START, "season_planner")
     workflow.add_edge("season_planner", "master_orchestrator")
-    
+
     workflow.add_edge("master_orchestrator", "data_integration")
     workflow.add_edge("master_orchestrator", "plan_formatter")
     workflow.add_edge("master_orchestrator", "season_planner")
     workflow.add_edge("master_orchestrator", "weekly_planner")
-    
+
     workflow.add_edge("data_integration", "weekly_planner")
     workflow.add_edge("weekly_planner", "master_orchestrator")
     workflow.add_edge("plan_formatter", END)
@@ -71,7 +72,7 @@ async def run_weekly_planning(
 ) -> dict:
     execution_id = f"{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_planning"
     config = {"configurable": {"thread_id": execution_id}}
-    
+
     initial_state = create_initial_state(
         user_id=user_id,
         athlete_name=athlete_name,
@@ -82,15 +83,19 @@ async def run_weekly_planning(
         week_dates=week_dates,
         execution_id=execution_id,
     )
-    initial_state.update({
-        "metrics_outputs": metrics_outputs,
-        "activity_outputs": activity_outputs,
-        "physiology_outputs": physiology_outputs,
-        "plots": plots or [],
-        "available_plots": available_plots or [],
-    })
+    initial_state.update(
+        {
+            "metrics_outputs": metrics_outputs,
+            "activity_outputs": activity_outputs,
+            "physiology_outputs": physiology_outputs,
+            "plots": plots or [],
+            "available_plots": available_plots or [],
+        }
+    )
 
-    async for chunk in create_planning_workflow().astream(initial_state, config=config, stream_mode="values"):
+    async for chunk in create_planning_workflow().astream(
+        initial_state, config=config, stream_mode="values"
+    ):
         logger.info(f"Planning workflow step: {list(chunk.keys()) if chunk else 'None'}")
         final_state = chunk
 
@@ -109,7 +114,7 @@ def create_integrated_analysis_and_planning_workflow():
     workflow.add_node("metrics_expert", metrics_expert_node)
     workflow.add_node("physiology_expert", physiology_expert_node)
     workflow.add_node("activity_expert", activity_expert_node)
-    
+
     workflow.add_node("synthesis", synthesis_node)
     workflow.add_node("formatter", formatter_node)
     workflow.add_node("plot_resolution", plot_resolution_node)
@@ -119,7 +124,7 @@ def create_integrated_analysis_and_planning_workflow():
     workflow.add_node("data_integration", data_integration_node)
     workflow.add_node("weekly_planner", weekly_planner_node)
     workflow.add_node("plan_formatter", plan_formatter_node)
-    
+
     workflow.add_node("finalize", lambda state: state, defer=True)
 
     workflow.add_edge(START, "metrics_summarizer")
@@ -130,21 +135,23 @@ def create_integrated_analysis_and_planning_workflow():
     workflow.add_edge("physiology_summarizer", "physiology_expert")
     workflow.add_edge("activity_summarizer", "activity_expert")
 
-    workflow.add_edge(["metrics_expert", "physiology_expert", "activity_expert"], "master_orchestrator")
-    
+    workflow.add_edge(
+        ["metrics_expert", "physiology_expert", "activity_expert"], "master_orchestrator"
+    )
+
     # Master orchestrator uses ONLY Command(goto=...) for dynamic routing
     # NO unconditional edges from orchestrator - it routes dynamically based on stage
-    
+
     workflow.add_edge("synthesis", "formatter")
     workflow.add_edge("formatter", "plot_resolution")
 
     # Season planner routes back to orchestrator for HITL handling
     workflow.add_edge("season_planner", "master_orchestrator")
-    
+
     # Data integration → weekly planner → orchestrator
     workflow.add_edge("data_integration", "weekly_planner")
     workflow.add_edge("weekly_planner", "master_orchestrator")
-    
+
     workflow.add_edge("plot_resolution", "finalize")
     workflow.add_edge("plan_formatter", "finalize")
     workflow.add_edge("finalize", END)
@@ -155,7 +162,7 @@ def create_integrated_analysis_and_planning_workflow():
         "Created integrated analysis + planning workflow with parallel architecture: "
         "3 summarizers → 3 experts → [analysis branch (synthesis/formatter/plots) || planning branch (season/data_integration/weekly/plan_formatter)] → finalize"
     )
-    
+
     return app
 
 

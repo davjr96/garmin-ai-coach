@@ -6,15 +6,9 @@ from typing import Any
 
 import httpx
 
-from services.outside.models import (
-    CalendarNode,
-    CalendarResult,
-    Event,
-    EventCategory,
-    EventType,
-    PageInfo,
-    SanctioningBody,
-)
+from services.outside.models import (CalendarNode, CalendarResult, Event,
+                                     EventCategory, EventType, PageInfo,
+                                     SanctioningBody)
 
 
 class OutsideApiGraphQlClient:
