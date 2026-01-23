@@ -18,6 +18,7 @@ def extract_physiology_data(state: TrainingAnalysisState) -> dict:
             "body_metrics": garmin_data.get("body_metrics", {}),
             "recovery_indicators": recovery_indicators,
         },
+        "heat_altitude_acclimatization": garmin_data.get("heat_altitude_acclimatization", []),
     }
 
 

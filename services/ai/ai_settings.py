@@ -23,15 +23,15 @@ class AISettings:
     model_assignments: dict[AIMode, dict[AgentRole, str]] = field(
         default_factory=lambda: {
             AIMode.STANDARD: {
-                AgentRole.SUMMARIZER: "gpt-5",
-                AgentRole.FORMATTER: "gpt-5",
-                AgentRole.METRICS_EXPERT: "gpt-5",
-                AgentRole.PHYSIOLOGY_EXPERT: "gpt-5",
-                AgentRole.ACTIVITY_EXPERT: "gpt-5",
-                AgentRole.SYNTHESIS: "gpt-5",
-                AgentRole.WORKOUT: "gpt-5",
-                AgentRole.SEASON_PLANNER: "gpt-5",
-                AgentRole.CHATBOT: "gpt-5",
+                AgentRole.SUMMARIZER: "gpt-5.2",
+                AgentRole.FORMATTER: "gpt-5.2",
+                AgentRole.METRICS_EXPERT: "gpt-5.2",
+                AgentRole.PHYSIOLOGY_EXPERT: "gpt-5.2",
+                AgentRole.ACTIVITY_EXPERT: "gpt-5.2",
+                AgentRole.SYNTHESIS: "gpt-5.2",
+                AgentRole.WORKOUT: "gpt-5.2",
+                AgentRole.SEASON_PLANNER: "gpt-5.2",
+                AgentRole.CHATBOT: "gpt-5.2",
             },
             AIMode.COST_EFFECTIVE: {
                 AgentRole.SUMMARIZER: "claude-3-haiku",

@@ -46,7 +46,12 @@ Extract insights on recovery status, adaptation state, and readiness.
 - Do NOT re-derive load metrics (Metrics Expert's job).
 - Do NOT redesign training structure (Planner's job).
 - Focus on **how the body is handling stress**.
-- **Altitude Effects**: If altitude changes are present in the data, consider altitude as an additional physiological stressor affecting HRV, RHR, sleep quality, and recovery capacity.
+- **Altitude-HRV Correlation (CRITICAL)**: When analyzing periods of low or suppressed HRV:
+  - Check the `heat_altitude_acclimatization` data for altitude changes (current_altitude, altitude_trend, altitude_acclimatization).
+  - Altitude exposure (especially >1500m) naturally suppresses HRV and elevates RHR during acclimatization.
+  - If low HRV coincides with altitude changes or "ACCLIMATIZING" trend, attribute the HRV suppression to altitude stress rather than overtraining or poor recovery.
+  - Distinguish between: (1) altitude-induced HRV suppression (normal physiological response), (2) training overload, (3) illness/life stress.
+  - During altitude acclimatization periods, adjust readiness interpretations—low HRV may not indicate poor recovery but rather expected adaptation stress.
 
 ## Output Requirements
 Produce 3 structured fields:
