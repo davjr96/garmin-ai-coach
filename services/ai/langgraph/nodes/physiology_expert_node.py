@@ -37,7 +37,7 @@ PHYSIOLOGY_USER_PROMPT = """## Task
 Analyze the physiology summary to assess recovery and adaptation.
 
 ## Constraints
-- Focus on **internal state** (HRV, sleep, RHR, stress).
+- Focus on **internal state** (HRV, sleep, RHR, stress, heat/altitude acclimatization).
 - Do NOT re-derive load metrics (Metrics Expert's job).
 - Do NOT redesign training structure (Planner's job).
 - Focus on **how the body is handling stress**.
