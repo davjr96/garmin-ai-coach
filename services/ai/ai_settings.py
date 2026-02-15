@@ -23,15 +23,15 @@ class AISettings:
     model_assignments: dict[AIMode, dict[AgentRole, str]] = field(
         default_factory=lambda: {
             AIMode.STANDARD: {
-                AgentRole.SUMMARIZER: "gpt-5.2",
-                AgentRole.FORMATTER: "gpt-5.2",
-                AgentRole.METRICS_EXPERT: "gpt-5.2",
-                AgentRole.PHYSIOLOGY_EXPERT: "gpt-5.2",
-                AgentRole.ACTIVITY_EXPERT: "gpt-5.2",
-                AgentRole.SYNTHESIS: "gpt-5.2",
-                AgentRole.WORKOUT: "gpt-5.2",
-                AgentRole.SEASON_PLANNER: "gpt-5.2",
-                AgentRole.CHATBOT: "gpt-5.2",
+                AgentRole.SUMMARIZER: "gpt-5",
+                AgentRole.FORMATTER: "gpt-5",
+                AgentRole.METRICS_EXPERT: "gpt-5-search",
+                AgentRole.PHYSIOLOGY_EXPERT: "gpt-5-search",
+                AgentRole.ACTIVITY_EXPERT: "gpt-5-search",
+                AgentRole.SYNTHESIS: "gpt-5",
+                AgentRole.WORKOUT: "gpt-5-search",
+                AgentRole.SEASON_PLANNER: "gpt-5-search",
+                AgentRole.CHATBOT: "gpt-5",
             },
             AIMode.COST_EFFECTIVE: {
                 AgentRole.SUMMARIZER: "claude-3-haiku",
@@ -54,6 +54,17 @@ class AISettings:
                 AgentRole.WORKOUT: "claude-4",
                 AgentRole.SEASON_PLANNER: "claude-4",
                 AgentRole.CHATBOT: "claude-4",
+            },
+            AIMode.PRO: {
+                AgentRole.SUMMARIZER: "gpt-5",
+                AgentRole.FORMATTER: "gpt-5",
+                AgentRole.METRICS_EXPERT: "gpt-5.2-pro-search",
+                AgentRole.PHYSIOLOGY_EXPERT: "gpt-5.2-pro-search",
+                AgentRole.ACTIVITY_EXPERT: "gpt-5.2-pro-search",
+                AgentRole.SYNTHESIS: "gpt-5-search",
+                AgentRole.WORKOUT: "gpt-5.2-pro-search",
+                AgentRole.SEASON_PLANNER: "gpt-5.2-pro-search",
+                AgentRole.CHATBOT: "gpt-5.2-pro-search",
             },
         }
     )

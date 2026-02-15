@@ -118,6 +118,67 @@ def fetch_outside_competitions_from_config(config: dict[str, Any]) -> list[dict[
     return aggregate
 
 
+def _save_html_outputs(output_dir: Path, result: dict[str, Any]) -> list[str]:
+    files_generated: list[str] = []
+
+    for filename, key in [
+        ("analysis.html", "analysis_html"),
+        ("planning.html", "planning_html"),
+    ]:
+        if content := result.get(key):
+            if isinstance(content, dict):
+                content = content.get("content", "")
+
+            output_path = output_dir / filename
+            output_path.write_text(content, encoding="utf-8")
+            files_generated.append(filename)
+            logger.info("Saved: %s", output_path)
+
+    return files_generated
+
+
+def _save_expert_outputs(output_dir: Path, result: dict[str, Any]) -> list[str]:
+    files_generated: list[str] = []
+
+    for filename, key in [
+        ("metrics_expert.json", "metrics_outputs"),
+        ("activity_expert.json", "activity_outputs"),
+        ("physiology_expert.json", "physiology_outputs"),
+    ]:
+        if output := result.get(key):
+            output_path = output_dir / filename
+            output_path.write_text(
+                json.dumps(output.model_dump(mode="json"), indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            files_generated.append(filename)
+            logger.info("Saved: %s", output_path)
+
+    return files_generated
+
+
+def _save_plan_outputs(output_dir: Path, result: dict[str, Any]) -> list[str]:
+    files_generated: list[str] = []
+
+    storage = FilePlanStorage()
+    user_id = result.get("user_id", "cli_user")
+
+    for filename, key in [
+        ("season_plan.md", "season_plan"),
+        ("weekly_plan.md", "weekly_plan"),
+    ]:
+        if plan_dict := result.get(key):
+            output = plan_dict.get("output", plan_dict) if isinstance(plan_dict, dict) else plan_dict
+            if isinstance(output, str):
+                output_path = output_dir / filename
+                output_path.write_text(output, encoding="utf-8")
+                files_generated.append(filename)
+                logger.info("Saved: %s", output_path)
+                storage.save_plan(user_id, key, output)
+
+    return files_generated
+
+
 async def run_analysis_from_config(config_path: Path) -> None:
     config_parser = ConfigParser(config_path)
     athlete_name, email = config_parser.get_athlete_info()
@@ -131,8 +192,8 @@ async def run_analysis_from_config(config_path: Path) -> None:
 
     output_dir = config_parser.get_output_directory()
 
-    logger.info(f"Starting analysis for {athlete_name}")
-    logger.info(f"Output directory: {output_dir}")
+    logger.info("Starting analysis for %s", athlete_name)
+    logger.info("Output directory: %s", output_dir)
 
     password = config_parser.get_password()
 
@@ -142,7 +203,7 @@ async def run_analysis_from_config(config_path: Path) -> None:
     reload_config()
     ai_settings.reload()
 
-    logger.info(f"AI Mode: {os.environ['AI_MODE']}")
+    logger.info("AI Mode: %s", os.environ["AI_MODE"])
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -165,9 +226,9 @@ async def run_analysis_from_config(config_path: Path) -> None:
         hitl_enabled = extraction_settings.get("hitl_enabled", True)
         skip_synthesis = extraction_settings.get("skip_synthesis", False)
 
-        logger.info(f"Plotting enabled: {plotting_enabled}")
-        logger.info(f"HITL enabled: {hitl_enabled}")
-        logger.info(f"Skip synthesis: {skip_synthesis}")
+        logger.info("Plotting enabled: %s", plotting_enabled)
+        logger.info("HITL enabled: %s", hitl_enabled)
+        logger.info("Skip synthesis: %s", skip_synthesis)
 
         current_date = {"date": now.strftime("%Y-%m-%d"), "day_name": now.strftime("%A")}
         week_dates = [
@@ -197,48 +258,9 @@ async def run_analysis_from_config(config_path: Path) -> None:
         logger.info("Saving results...")
 
         files_generated: list[str] = []
-
-        for filename, key in [
-            ("analysis.html", "analysis_html"),
-            ("planning.html", "planning_html"),
-        ]:
-            if content := result.get(key):
-                if isinstance(content, dict):
-                    content = content.get("content", "")
-                (output_dir / filename).write_text(content, encoding="utf-8")
-                files_generated.append(filename)
-                logger.info(f"Saved: {output_dir}/{filename}")
-
-        for filename, key in [
-            ("metrics_expert.json", "metrics_outputs"),
-            ("activity_expert.json", "activity_outputs"),
-            ("physiology_expert.json", "physiology_outputs"),
-        ]:
-            if output := result.get(key):
-                (output_dir / filename).write_text(
-                    json.dumps(output.model_dump(mode="json"), indent=2, ensure_ascii=False),
-                    encoding="utf-8",
-                )
-                files_generated.append(filename)
-                logger.info(f"Saved: {output_dir}/{filename}")
-
-        for filename, key in [
-            ("season_plan.md", "season_plan"),
-            ("weekly_plan.md", "weekly_plan"),
-        ]:
-            if plan_dict := result.get(key):
-                output = plan_dict.get("output", plan_dict)
-                if isinstance(output, str):
-                    (output_dir / filename).write_text(output, encoding="utf-8")
-                    files_generated.append(filename)
-                    logger.info(f"Saved: {output_dir}/{filename}")
-
-                    # Also save to persistent storage
-                    storage = FilePlanStorage()
-                    plan_type = "season_plan" if key == "season_plan" else "weekly_plan"
-                    # Use the user_id from the result or default to "cli_user"
-                    user_id = result.get("user_id", "cli_user")
-                    storage.save_plan(user_id, plan_type, output)
+        files_generated.extend(_save_html_outputs(output_dir, result))
+        files_generated.extend(_save_expert_outputs(output_dir, result))
+        files_generated.extend(_save_plan_outputs(output_dir, result))
 
         cost_total = float(
             result.get("cost_summary", {}).get("total_cost_usd", 0.0)
@@ -271,11 +293,11 @@ async def run_analysis_from_config(config_path: Path) -> None:
 
         logger.info("✅ Analysis completed successfully!")
         if outside_competitions:
-            logger.info(f"✅  Added {len(outside_competitions)} Outside competitions from config")
-        logger.info(f"📁 Results saved to: {output_dir}")
-        logger.info(f"💰 Total cost: ${cost_total:.2f} ({total_tokens} tokens)")
+            logger.info("✅  Added %d Outside competitions from config", len(outside_competitions))
+        logger.info("📁 Results saved to: %s", output_dir)
+        logger.info("💰 Total cost: $%.2f (%d tokens)", cost_total, total_tokens)
     except Exception as e:
-        logger.error(f"❌ Analysis failed: {e}")
+        logger.error("❌ Analysis failed: %s", e)
         raise
 
 
@@ -325,7 +347,7 @@ async def run_chatbot_from_config(
         session_id: Specific session ID to resume
     """
     config_parser = ConfigParser(config_path)
-    athlete_name, email = config_parser.get_athlete_info()
+    athlete_name, _ = config_parser.get_athlete_info()
     output_dir = config_parser.get_output_directory()
     extraction_settings = config_parser.get_extraction_config()
 
@@ -334,7 +356,7 @@ async def run_chatbot_from_config(
     reload_config()
     ai_settings.reload()
 
-    logger.info(f"🤖 Starting chatbot for {athlete_name}...")
+    logger.info("🤖 Starting chatbot for %s...", athlete_name)
 
     # Validate analysis outputs exist
     loader = AnalysisContextLoader(output_dir, user_id="cli_user")
@@ -342,15 +364,15 @@ async def run_chatbot_from_config(
     if not loader.validate_outputs_exist():
         logger.error("❌ No analysis outputs found. Run analysis first with --config")
         logger.info("Required files: summary.json, season_plan.md, weekly_plan.md")
-        logger.info(f"Looking in: {output_dir}")
+        logger.info("Looking in: %s", output_dir)
         sys.exit(1)
 
     # Load context
-    logger.info(f"Loading analysis from {output_dir}...")
+    logger.info("Loading analysis from %s...", output_dir)
     try:
         context = loader.load_context()
     except Exception as e:
-        logger.error(f"❌ Failed to load analysis context: {e}")
+        logger.error("❌ Failed to load analysis context: %s", e)
         sys.exit(1)
 
     # Initialize and run chatbot
@@ -370,7 +392,7 @@ def create_config_template(output_path: Path) -> None:
 
     if template_path.exists():
         output_path.write_text(template_path.read_text(encoding="utf-8"), encoding="utf-8")
-        logger.info(f"✅ Config template created: {output_path}")
+        logger.info("✅ Config template created: %s", output_path)
         logger.info("Edit this file with your settings and run analysis with --config")
     else:
         logger.error("❌ Template file not found")
@@ -422,7 +444,7 @@ def main():
         except KeyboardInterrupt:
             logger.info("\n❌ Chat session ended by user")
         except Exception as e:
-            logger.error(f"❌ Chatbot failed: {e}")
+            logger.error("❌ Chatbot failed: %s", e)
             sys.exit(1)
         return
 
@@ -432,7 +454,7 @@ def main():
         except KeyboardInterrupt:
             logger.info("❌ Analysis cancelled by user")
         except Exception as e:
-            logger.error(f"❌ Analysis failed: {e}")
+            logger.error("❌ Analysis failed: %s", e)
             sys.exit(1)
 
 

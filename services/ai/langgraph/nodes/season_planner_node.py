@@ -3,16 +3,19 @@ import logging
 from datetime import datetime
 
 from services.ai.ai_settings import AgentRole
+from services.ai.langgraph.schemas import AgentOutput
+from services.ai.langgraph.state.training_analysis_state import TrainingAnalysisState
+from services.ai.langgraph.utils.output_helper import extract_expert_output
 from services.ai.model_config import ModelSelector
 from services.ai.utils.plan_storage import FilePlanStorage
-from services.ai.utils.retry_handler import (AI_ANALYSIS_CONFIG,
-                                             retry_with_backoff)
+from services.ai.utils.retry_handler import AI_ANALYSIS_CONFIG, retry_with_backoff
 
-from ..schemas import AgentOutput
-from ..state.training_analysis_state import TrainingAnalysisState
-from ..utils.output_helper import extract_expert_output
-from .node_base import (configure_node_tools, create_cost_entry,
-                        execute_node_with_error_handling, log_node_completion)
+from .node_base import (
+    configure_node_tools,
+    create_cost_entry,
+    execute_node_with_error_handling,
+    log_node_completion,
+)
 from .prompt_components import get_hitl_instructions, get_workflow_context
 from .tool_calling_helper import handle_tool_calling_in_node
 
@@ -62,11 +65,13 @@ Format as structured markdown.
 **Stay high-level**. Design the **map of the season**, not the turn-by-turn navigation. **BE CONCISE**."""
 
 
+
+
 async def season_planner_node(state: TrainingAnalysisState) -> dict[str, list | str]:
     logger.info("Starting season planner node")
 
     hitl_enabled = state.get("hitl_enabled", True)
-    logger.info(f"Season planner node: HITL {'enabled' if hitl_enabled else 'disabled'}")
+    logger.info("Season planner node: HITL %s", "enabled" if hitl_enabled else "disabled")
 
     agent_start_time = datetime.now()
 
@@ -77,9 +82,9 @@ async def season_planner_node(state: TrainingAnalysisState) -> dict[str, list | 
     )
 
     system_prompt = (
-        SEASON_PLANNER_SYSTEM_PROMPT
-        + get_workflow_context("season_planner")
-        + (get_hitl_instructions("season_planner") if hitl_enabled else "")
+        SEASON_PLANNER_SYSTEM_PROMPT +
+        get_workflow_context("season_planner") +
+        (get_hitl_instructions("season_planner") if hitl_enabled else "")
     )
 
     qa_messages_raw = state.get("season_planner_messages", [])
@@ -97,33 +102,19 @@ async def season_planner_node(state: TrainingAnalysisState) -> dict[str, list | 
         loaded_plan = storage.load_plan(state["user_id"], "season_plan")
         if loaded_plan:
             existing_season_plan = loaded_plan
-    except Exception as e:
-        logger.warning(f"Could not read existing season plan: {e}")
+    except Exception as exc:
+        logger.warning("Could not read existing season plan: %s", exc)
 
     base_messages = [
         {"role": "system", "content": system_prompt},
-        {
-            "role": "user",
-            "content": SEASON_PLANNER_USER_PROMPT.format(
-                athlete_name=state["athlete_name"],
-                current_date=json.dumps(state["current_date"], indent=2),
-                competitions=json.dumps(state["competitions"], indent=2),
-                metrics_insights=extract_expert_output(
-                    state.get("metrics_outputs"), "for_season_planner"
-                ),
-                activity_insights=extract_expert_output(
-                    state.get("activity_outputs"), "for_season_planner"
-                ),
-                physiology_insights=extract_expert_output(
-                    state.get("physiology_outputs"), "for_season_planner"
-                ),
-            )
-            + (
-                f"\n\n## Existing Season Plan\nWe have an existing season plan. Do NOT start from scratch. Review this plan against the new expert insights. If the plan is still valid, maintain the phase structure and just refine the details. Only trigger a full replan if the new data suggests the old plan is dangerously off-track.\n\n```markdown\n{existing_season_plan}\n```"
-                if existing_season_plan
-                else ""
-            ),
-        },
+        {"role": "user", "content": SEASON_PLANNER_USER_PROMPT.format(
+            athlete_name=state["athlete_name"],
+            current_date=json.dumps(state["current_date"], indent=2),
+            competitions=json.dumps(state["competitions"], indent=2),
+            metrics_insights=extract_expert_output(state.get("metrics_outputs"), "for_season_planner"),
+            activity_insights=extract_expert_output(state.get("activity_outputs"), "for_season_planner"),
+            physiology_insights=extract_expert_output(state.get("physiology_outputs"), "for_season_planner"),
+        ) + (f"\n\n## Existing Season Plan\nWe have an existing season plan. Do NOT start from scratch. Review this plan against the new expert insights. If the plan is still valid, maintain the phase structure and just refine the details. Only trigger a full replan if the new data suggests the old plan is dangerously off-track.\n\n```markdown\n{existing_season_plan}\n```" if existing_season_plan else "")},
     ]
 
     base_llm = ModelSelector.get_llm(AgentRole.SEASON_PLANNER)

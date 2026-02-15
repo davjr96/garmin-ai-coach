@@ -6,8 +6,10 @@ from typing import Any
 
 class TimeRange(Enum):
     # Values are determined by AI_MODE environment variable
-    RECENT = 7 if os.getenv('AI_MODE') == 'development' else 21
-    EXTENDED = 14 if os.getenv('AI_MODE') == 'development' else 56
+    RECENT = 7 if os.getenv("AI_MODE") == "development" else 21
+    EXTENDED = 14 if os.getenv("AI_MODE") == "development" else 56
+    LONG_TERM_RANGE = 360
+    LONG_TERM_INTERVAL = 7
 
 
 @dataclass
@@ -17,6 +19,9 @@ class ExtractionConfig:
     include_detailed_activities: bool = True
     include_metrics: bool = True
     include_mindfulness: bool = True
+    include_long_term_trends: bool = True
+    long_term_range: int = TimeRange.LONG_TERM_RANGE.value
+    long_term_interval: int = TimeRange.LONG_TERM_INTERVAL.value
 
 
 @dataclass
@@ -151,24 +156,6 @@ class TrainingStatus:
 
 
 @dataclass
-class HeatAltitudeAcclimatization:
-    date: str | None = None
-    altitude_acclimatization: float | None = None  # Altitude in meters the body is acclimatized to
-    previous_altitude_acclimatization: float | None = None
-    heat_acclimatization_percentage: float | None = None
-    previous_heat_acclimatization_percentage: float | None = None
-    altitude_trend: str | None = None  # "ACCLIMATIZED", "ACCLIMATIZING", "DEACCLIMATIZING"
-    heat_trend: str | None = None
-    current_altitude: float | None = None  # Current altitude in meters
-    previous_altitude: float | None = None
-    acclimatization_percentage: float | None = (
-        None  # Progress towards full acclimatization (0-100%)
-    )
-    previous_acclimatization_percentage: float | None = None
-    altitude_acclimatization_timestamp: str | None = None
-
-
-@dataclass
 class GarminData:
     user_profile: UserProfile | None = None
     daily_stats: DailyStats | None = None
@@ -180,4 +167,5 @@ class GarminData:
     training_status: TrainingStatus | None = None
     vo2_max_history: dict[str, list[dict[str, Any]]] | None = None
     training_load_history: list[dict[str, Any]] | None = None
-    heat_altitude_acclimatization: list[HeatAltitudeAcclimatization] | None = None
+    long_term_vo2_max_trend: dict[str, list[dict[str, Any]]] | None = None
+    long_term_training_load_trend: list[dict[str, Any]] | None = None

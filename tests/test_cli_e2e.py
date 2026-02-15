@@ -7,10 +7,7 @@ from services.garmin.models import GarminData
 
 
 @pytest.mark.asyncio
-@patch(
-    "services.ai.langgraph.workflows.planning_workflow.run_complete_analysis_and_planning",
-    new_callable=AsyncMock,
-)
+@patch("services.ai.langgraph.workflows.planning_workflow.run_complete_analysis_and_planning", new_callable=AsyncMock)
 @patch("services.garmin.TriathlonCoachDataExtractor")
 @patch("services.outside.client.OutsideApiGraphQlClient")
 async def test_cli_e2e_smoke_with_mocks(
@@ -20,7 +17,6 @@ async def test_cli_e2e_smoke_with_mocks(
     tmp_path,
 ):
     """Test CLI end-to-end with all external dependencies mocked."""
-
     # Configure workflow mock
     mock_workflow.return_value = {
         "analysis_html": "<html><body>Analysis OK</body></html>",
@@ -88,10 +84,7 @@ credentials:
 
 
 @pytest.mark.asyncio
-@patch(
-    "services.ai.langgraph.workflows.planning_workflow.run_complete_analysis_and_planning",
-    new_callable=AsyncMock,
-)
+@patch("services.ai.langgraph.workflows.planning_workflow.run_complete_analysis_and_planning", new_callable=AsyncMock)
 @patch("services.garmin.TriathlonCoachDataExtractor")
 @patch("services.outside.client.OutsideApiGraphQlClient")
 @patch("getpass.getpass", return_value="dummy")
@@ -105,12 +98,11 @@ async def test_cli_e2e_with_hitl_enabled(
     tmp_path,
 ):
     """Test CLI with HITL enabled to ensure user interactions work."""
-
     # Configure workflow mock
     mock_workflow.return_value = {
         "analysis_html": "<html><body>Analysis with HITL</body></html>",
         "planning_html": "<html><body>Plan with HITL</body></html>",
-        "metrics_outputs": None,
+       "metrics_outputs": None,
         "activity_outputs": None,
         "physiology_outputs": None,
         "season_plan": {"output": "Season OK"},

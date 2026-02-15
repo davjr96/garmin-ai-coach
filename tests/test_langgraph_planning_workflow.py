@@ -1,9 +1,13 @@
 import pytest
 
 from services.ai.langgraph.state.training_analysis_state import (
-    TrainingAnalysisState, create_initial_state)
+    TrainingAnalysisState,
+    create_initial_state,
+)
 from services.ai.langgraph.workflows.planning_workflow import (
-    create_integrated_analysis_and_planning_workflow, create_planning_workflow)
+    create_integrated_analysis_and_planning_workflow,
+    create_planning_workflow,
+)
 
 
 class TestWorkflowStability:
@@ -97,13 +101,7 @@ class TestWorkflowDataFlow:
             user_id="test", athlete_name="Test", garmin_data={}, execution_id="test"
         )
 
-        for field in [
-            "competitions",
-            "current_date",
-            "week_dates",
-            "planning_context",
-            "athlete_name",
-        ]:
+        for field in ["competitions", "current_date", "week_dates", "planning_context", "athlete_name"]:
             assert field in state
 
         for field in ["season_plan", "weekly_plan", "planning_html"]:
@@ -117,13 +115,10 @@ class TestWorkflowDataFlow:
             user_id="test", athlete_name="Test", garmin_data={}, execution_id="test"
         )
 
-        updated_state = {
-            **initial_state,
-            **{
-                "season_plan": "Test season plan content",
-                "weekly_plan": "Test weekly plan content",
-                "planning_html": "<html>Test HTML</html>",
-            },
+        updated_state = {**initial_state,
+            "season_plan": "Test season plan content",
+            "weekly_plan": "Test weekly plan content",
+            "planning_html": "<html>Test HTML</html>"
         }
 
         assert updated_state["season_plan"] == "Test season plan content"
@@ -137,14 +132,10 @@ class TestWorkflowDataFlow:
 class TestWorkflowImports:
 
     def test_all_planning_nodes_importable(self):
-        from services.ai.langgraph.nodes.data_integration_node import \
-            data_integration_node
-        from services.ai.langgraph.nodes.plan_formatter_node import \
-            plan_formatter_node
-        from services.ai.langgraph.nodes.season_planner_node import \
-            season_planner_node
-        from services.ai.langgraph.nodes.weekly_planner_node import \
-            weekly_planner_node
+        from services.ai.langgraph.nodes.data_integration_node import data_integration_node
+        from services.ai.langgraph.nodes.plan_formatter_node import plan_formatter_node
+        from services.ai.langgraph.nodes.season_planner_node import season_planner_node
+        from services.ai.langgraph.nodes.weekly_planner_node import weekly_planner_node
 
         nodes = [
             season_planner_node,
@@ -158,8 +149,10 @@ class TestWorkflowImports:
     def test_workflow_functions_importable(self):
         from services.ai.langgraph.workflows.planning_workflow import (
             create_integrated_analysis_and_planning_workflow,
-            create_planning_workflow, run_complete_analysis_and_planning,
-            run_weekly_planning)
+            create_planning_workflow,
+            run_complete_analysis_and_planning,
+            run_weekly_planning,
+        )
 
         functions = [
             create_planning_workflow,
@@ -172,7 +165,9 @@ class TestWorkflowImports:
 
     def test_state_management_importable(self):
         from services.ai.langgraph.state.training_analysis_state import (
-            TrainingAnalysisState, create_initial_state)
+            TrainingAnalysisState,
+            create_initial_state,
+        )
 
         assert TrainingAnalysisState is not None
 

@@ -1,11 +1,12 @@
 import asyncio
 import logging
 import random
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import Any
 
 import anthropic
+from anthropic._exceptions import DeadlineExceededError, OverloadedError, ServiceUnavailableError
 from langgraph.errors import GraphInterrupt
 
 logger = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ class RetryConfig:
         max_delay: float = 60.0,
         exponential_base: float = 2.0,
         jitter: bool = True,
-        retryable_exceptions: set[type[Exception]] = None,
+        retryable_exceptions: set[type[Exception]] | None = None,
     ):
         self.max_retries = max_retries
         self.base_delay = base_delay
@@ -36,9 +37,15 @@ class RetryConfig:
         self.exponential_base = exponential_base
         self.jitter = jitter
         self.retryable_exceptions = retryable_exceptions or {
-            anthropic.APIStatusError,
-            anthropic.RateLimitError,
-            APIOverloadError,
+            anthropic.RateLimitError,  # 429 - rate limits
+            anthropic.ConflictError,  # 409 - conflicts
+            anthropic.InternalServerError,  # 5xx - server errors
+            ServiceUnavailableError,  # 503 - service unavailable
+            DeadlineExceededError,  # 504 - gateway timeout
+            OverloadedError,  # 529 - overloaded
+            anthropic.APIConnectionError,  # Network/connection issues
+            anthropic.APITimeoutError,  # Timeouts
+            APIOverloadError,  # Custom local exception
         }
 
     def calculate_delay(self, attempt: int) -> float:
@@ -50,7 +57,9 @@ class RetryConfig:
 
 
 async def retry_with_backoff(
-    func: Callable, config: RetryConfig = None, context: str = "operation"
+    func: Callable[[], Awaitable[Any]],
+    config: RetryConfig | None = None,
+    context: str = "operation",
 ) -> Any:
 
     if config is None:
@@ -60,7 +69,12 @@ async def retry_with_backoff(
 
     for attempt in range(config.max_retries + 1):
         try:
-            logger.debug(f"Attempting {context} (attempt {attempt + 1}/{config.max_retries + 1})")
+            logger.debug(
+                "Attempting %s (attempt %s/%s)",
+                context,
+                attempt + 1,
+                config.max_retries + 1,
+            )
             return await func()
 
         except GraphInterrupt:
@@ -71,34 +85,31 @@ async def retry_with_backoff(
 
             is_retryable = any(isinstance(e, exc_type) for exc_type in config.retryable_exceptions)
 
-            if isinstance(e, anthropic.APIStatusError):
-                error_type = (
-                    getattr(e.body, "error", {}).get("type", "") if hasattr(e, "body") else ""
-                )
-                if error_type in ["overloaded_error", "rate_limit_error"]:
-                    is_retryable = True
-                    logger.warning(f"{context} failed with {error_type}: {e}")
-                else:
-                    logger.error(f"{context} failed with non-retryable API error: {e}")
-                    break
-
-            if not is_retryable:
-                logger.error(f"{context} failed with non-retryable error: {e}")
+            if is_retryable:
+                logger.warning("%s failed with retryable %s: %s", context, type(e).__name__, e)
+            else:
+                logger.error("%s failed with non-retryable error: %s", context, e)
                 break
 
             if attempt < config.max_retries:
                 delay = config.calculate_delay(attempt)
                 logger.info(
-                    f"{context} failed (attempt {attempt + 1}), retrying in {delay:.1f}s: {e}"
+                    "%s failed (attempt %s), retrying in %.1fs: %s",
+                    context,
+                    attempt + 1,
+                    delay,
+                    e,
                 )
                 await asyncio.sleep(delay)
             else:
-                logger.error(f"{context} failed after {config.max_retries + 1} attempts: {e}")
+                logger.error("%s failed after %s attempts: %s", context, config.max_retries + 1, e)
 
+    if last_exception is None:
+        raise RuntimeError(f"{context} failed without capturing an exception")
     raise last_exception
 
 
-def with_retry(config: RetryConfig = None, context: str = None):
+def with_retry(config: RetryConfig | None = None, context: str | None = None):
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -124,23 +135,3 @@ AI_ANALYSIS_CONFIG = RetryConfig(
 )
 
 QUICK_RETRY_CONFIG = RetryConfig(max_retries=2, base_delay=0.5, max_delay=10.0)
-
-
-def is_anthropic_overload_error(exception: Exception) -> bool:
-    return (
-        isinstance(exception, anthropic.APIStatusError)
-        and hasattr(exception, "body")
-        and hasattr(exception.body, "error")
-        and exception.body.error.get("type", "") == "overloaded_error"
-    )
-
-
-def get_error_details(exception: Exception) -> str:
-    if (
-        isinstance(exception, anthropic.APIStatusError)
-        and hasattr(exception, "body")
-        and hasattr(exception.body, "error")
-    ):
-        error_info = exception.body.error
-        return f"{error_info.get('type', 'unknown')}: {error_info.get('message', str(exception))}"
-    return str(exception)

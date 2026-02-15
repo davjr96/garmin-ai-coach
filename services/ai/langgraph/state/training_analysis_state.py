@@ -1,9 +1,7 @@
 from typing import Annotated, Any
 
 from langgraph.graph import MessagesState
-
-from ..schemas import (ActivityExpertOutputs, MetricsExpertOutputs,
-                       PhysiologyExpertOutputs)
+from services.ai.langgraph.schemas import ActivityExpertOutputs, MetricsExpertOutputs, PhysiologyExpertOutputs
 
 
 class TrainingAnalysisState(MessagesState):
@@ -112,4 +110,5 @@ def create_initial_state(
         physiology_expert_messages=[],
         season_planner_messages=[],
         weekly_planner_messages=[],
+        messages=[],
     )

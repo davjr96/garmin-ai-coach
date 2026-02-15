@@ -19,16 +19,19 @@ class PlotReferenceResolver:
         def replace_plot_reference(match):
             plot_id = match.group(1)
             if plot_id in resolved_plots:
-                logger.warning(f"Removing duplicate reference to plot {plot_id}")
+                logger.warning("Removing duplicate reference to plot %s", plot_id)
                 return ""
             resolved_plots.add(plot_id)
             return self._embed_plot(plot_id)
 
         resolved_text = re.sub(self.PLOT_PATTERN, replace_plot_reference, text)
 
+        total_references = len(re.findall(self.PLOT_PATTERN, text))
         logger.info(
-            f"Resolved {len(resolved_plots)}/{len(re.findall(self.PLOT_PATTERN, text))} plot references, "
-            f"removed {len(re.findall(self.PLOT_PATTERN, text)) - len(resolved_plots)} duplicates"
+            "Resolved %d/%d plot references, removed %d duplicates",
+            len(resolved_plots),
+            total_references,
+            total_references - len(resolved_plots),
         )
 
         return resolved_text
@@ -40,7 +43,7 @@ class PlotReferenceResolver:
             return self._wrap_plot_html(plot_id, plot_html)
 
         plot_metadata = self.plot_storage.get_plot(plot_id)
-        logger.warning(f"Plot {plot_id} not found, using fallback")
+        logger.warning("Plot %s not found, using fallback", plot_id)
 
         if plot_metadata:
             return f"""
@@ -70,7 +73,8 @@ class PlotReferenceResolver:
     def validate_plot_references(self, text: str) -> dict[str, Any]:
         referenced_plots = self.extract_plot_references(text)
         available = set(self.plot_storage.get_all_plots().keys())
-        found, missing = [], []
+        found: list[str] = []
+        missing: list[str] = []
 
         for pid in referenced_plots:
             (found if pid in available else missing).append(pid)
@@ -87,15 +91,10 @@ class PlotReferenceResolver:
         if not (plots := self.plot_storage.list_available_plots()):
             return "No plots available"
 
-        return "\n".join(
-            [
-                f"Available plots ({len(plots)}):",
-                *[
-                    f"  - {plot['plot_id']}: {plot['description']} (by {plot['agent_name']})"
-                    for plot in plots
-                ],
-            ]
-        )
+        return "\n".join([
+            f"Available plots ({len(plots)}):",
+            *[f"  - {plot['plot_id']}: {plot['description']} (by {plot['agent_name']})" for plot in plots]
+        ])
 
 
 class HTMLPlotEmbedder:

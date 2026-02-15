@@ -101,7 +101,9 @@ class GarminConnectClient:
             raise
 
     @property
-    def client(self) -> Garmin | None:
+    def client(self) -> Garmin:
+        if self._client is None:
+            raise RuntimeError("GarminConnectClient not connected")
         return self._client
 
     def get_heat_altitude_acclimatization(self, start_date: str, end_date: str) -> dict | None:

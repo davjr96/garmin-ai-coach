@@ -1,27 +1,27 @@
 import logging
 from datetime import datetime
+from typing import Any, cast
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
-from ..config.langsmith_config import LangSmithConfig
-from ..nodes.activity_expert_node import activity_expert_node
-from ..nodes.activity_summarizer_node import activity_summarizer_node
-from ..nodes.data_integration_node import data_integration_node
-from ..nodes.formatter_node import formatter_node
-from ..nodes.metrics_expert_node import metrics_expert_node
-from ..nodes.metrics_summarizer_node import metrics_summarizer_node
-from ..nodes.orchestrator_node import master_orchestrator_node
-from ..nodes.physiology_expert_node import physiology_expert_node
-from ..nodes.physiology_summarizer_node import physiology_summarizer_node
-from ..nodes.plan_formatter_node import plan_formatter_node
-from ..nodes.plot_resolution_node import plot_resolution_node
-from ..nodes.season_planner_node import season_planner_node
-from ..nodes.synthesis_node import synthesis_node
-from ..nodes.weekly_planner_node import weekly_planner_node
-from ..state.training_analysis_state import (TrainingAnalysisState,
-                                             create_initial_state)
-from ..utils.workflow_cost_tracker import ProgressIntegratedCostTracker
+from services.ai.langgraph.config.langsmith_config import LangSmithConfig
+from services.ai.langgraph.nodes.activity_expert_node import activity_expert_node
+from services.ai.langgraph.nodes.activity_summarizer_node import activity_summarizer_node
+from services.ai.langgraph.nodes.data_integration_node import data_integration_node
+from services.ai.langgraph.nodes.formatter_node import formatter_node
+from services.ai.langgraph.nodes.metrics_expert_node import metrics_expert_node
+from services.ai.langgraph.nodes.metrics_summarizer_node import metrics_summarizer_node
+from services.ai.langgraph.nodes.orchestrator_node import master_orchestrator_node
+from services.ai.langgraph.nodes.physiology_expert_node import physiology_expert_node
+from services.ai.langgraph.nodes.physiology_summarizer_node import physiology_summarizer_node
+from services.ai.langgraph.nodes.plan_formatter_node import plan_formatter_node
+from services.ai.langgraph.nodes.plot_resolution_node import plot_resolution_node
+from services.ai.langgraph.nodes.season_planner_node import season_planner_node
+from services.ai.langgraph.nodes.synthesis_node import synthesis_node
+from services.ai.langgraph.nodes.weekly_planner_node import weekly_planner_node
+from services.ai.langgraph.state.training_analysis_state import TrainingAnalysisState, create_initial_state
+from services.ai.langgraph.utils.workflow_cost_tracker import ProgressIntegratedCostTracker
 
 logger = logging.getLogger(__name__)
 
@@ -83,20 +83,20 @@ async def run_weekly_planning(
         week_dates=week_dates,
         execution_id=execution_id,
     )
-    initial_state.update(
-        {
-            "metrics_outputs": metrics_outputs,
-            "activity_outputs": activity_outputs,
-            "physiology_outputs": physiology_outputs,
-            "plots": plots or [],
-            "available_plots": available_plots or [],
-        }
-    )
+    initial_state.update({
+        "metrics_outputs": metrics_outputs,
+        "activity_outputs": activity_outputs,
+        "physiology_outputs": physiology_outputs,
+        "plots": plots or [],
+        "available_plots": available_plots or [],
+    })
 
     async for chunk in create_planning_workflow().astream(
-        initial_state, config=config, stream_mode="values"
+        initial_state,
+        config=config,
+        stream_mode="values",
     ):
-        logger.info(f"Planning workflow step: {list(chunk.keys()) if chunk else 'None'}")
+        logger.info("Planning workflow step: %s", list(chunk.keys()) if chunk else "None")
         final_state = chunk
 
     return final_state
@@ -135,9 +135,7 @@ def create_integrated_analysis_and_planning_workflow():
     workflow.add_edge("physiology_summarizer", "physiology_expert")
     workflow.add_edge("activity_summarizer", "activity_expert")
 
-    workflow.add_edge(
-        ["metrics_expert", "physiology_expert", "activity_expert"], "master_orchestrator"
-    )
+    workflow.add_edge(["metrics_expert", "physiology_expert", "activity_expert"], "master_orchestrator")
 
     # Master orchestrator uses ONLY Command(goto=...) for dynamic routing
     # NO unconditional edges from orchestrator - it routes dynamically based on stage
@@ -183,9 +181,10 @@ async def run_complete_analysis_and_planning(
     execution_id = f"{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_complete"
     cost_tracker = ProgressIntegratedCostTracker(f"garmin_ai_coach_{user_id}", progress_manager)
 
+
     final_state, execution = await cost_tracker.run_workflow_with_progress(
         create_integrated_analysis_and_planning_workflow(),
-        create_initial_state(
+        cast("dict[str, Any]", create_initial_state(
             user_id=user_id,
             athlete_name=athlete_name,
             garmin_data=garmin_data,
@@ -198,7 +197,7 @@ async def run_complete_analysis_and_planning(
             plotting_enabled=plotting_enabled,
             hitl_enabled=hitl_enabled,
             skip_synthesis=skip_synthesis,
-        ),
+        )),
         execution_id,
         user_id,
     )
@@ -213,12 +212,13 @@ async def run_complete_analysis_and_planning(
             "total_tokens": execution.cost_summary.total_tokens,
         }
         logger.info(
-            f"Workflow complete for user {user_id}: "
-            f"${execution.cost_summary.total_cost_usd:.4f} "
-            f"({execution.cost_summary.total_tokens} tokens)"
+            "Workflow complete for user %s: $%.4f (%d tokens)",
+            user_id,
+            execution.cost_summary.total_cost_usd,
+            execution.cost_summary.total_tokens,
         )
     else:
-        logger.warning(f"No cost data available for user {user_id} workflow")
+        logger.warning("No cost data available for user %s workflow", user_id)
         final_state["cost_summary"] = {"total_cost_usd": 0.0, "total_tokens": 0}
         final_state["execution_metadata"] = {}
 

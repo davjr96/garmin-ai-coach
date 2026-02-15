@@ -2,12 +2,9 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from services.ai.langgraph.nodes.metrics_summarizer_node import \
-    metrics_summarizer_node
-from services.ai.langgraph.nodes.physiology_summarizer_node import \
-    physiology_summarizer_node
-from services.ai.langgraph.state.training_analysis_state import \
-    create_initial_state
+from services.ai.langgraph.nodes.metrics_summarizer_node import metrics_summarizer_node
+from services.ai.langgraph.nodes.physiology_summarizer_node import physiology_summarizer_node
+from services.ai.langgraph.state.training_analysis_state import create_initial_state
 
 
 @pytest.mark.asyncio
@@ -29,9 +26,7 @@ async def test_metrics_summarizer_node_basic():
     )
 
     mock_response = Mock()
-    mock_response.content = (
-        "Mocked metrics summary: Training load shows progression from 100 to 120."
-    )
+    mock_response.content = "Mocked metrics summary: Training load shows progression from 100 to 120."
 
     mock_llm = Mock()
     mock_llm.ainvoke = AsyncMock(return_value=mock_response)
@@ -50,7 +45,9 @@ async def test_metrics_summarizer_node_basic():
 @pytest.mark.asyncio
 async def test_physiology_summarizer_node_basic():
     test_data = {
-        "physiological_markers": {"hrv": {"average": 60, "baseline": 58}},
+        "physiological_markers": {
+            "hrv": {"average": 60, "baseline": 58}
+        },
         "body_metrics": {"weight": 70, "body_fat": 12},
         "recovery_indicators": [
             {"date": "2024-01-01", "sleep": {"duration": 8, "quality": 85}, "stress": 30},

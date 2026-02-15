@@ -1,18 +1,19 @@
 import logging
+from collections.abc import Sequence
 from typing import Protocol
 
 from langchain_core.messages import AIMessage, HumanMessage
+
 from langgraph.types import Command
-
 from services.ai.ai_settings import AgentRole
-
-from ..state.training_analysis_state import TrainingAnalysisState
+from services.ai.langgraph.state.training_analysis_state import TrainingAnalysisState
 
 logger = logging.getLogger(__name__)
 
 
 class InteractionProvider(Protocol):
-    def collect_answers(self, questions: list[dict], stage_name: str) -> list[dict]: ...
+    def collect_answers(self, questions: list[dict], stage_name: str) -> list[dict]:
+        ...
 
 
 class ConsoleInteractionProvider:
@@ -34,11 +35,13 @@ class ConsoleInteractionProvider:
 
             user_answer = input("\n👤 Your answer: ").strip()
 
-            logger.info(f"User answered {agent_name} question {i}: {user_answer}")
+            logger.info("User answered %s question %s: %s", agent_name, i, user_answer)
 
-            answers.append(
-                {"agent": qa["agent"], "question": question_data["message"], "answer": user_answer}
-            )
+            answers.append({
+                "agent": qa["agent"],
+                "question": question_data["message"],
+                "answer": user_answer
+            })
 
         print(f"\n{'='*60}\n")
         return answers
@@ -47,55 +50,48 @@ class ConsoleInteractionProvider:
 class MasterOrchestrator:
     STAGES = {
         "analysis": {
-            "agents": [
-                AgentRole.METRICS_EXPERT.value,
-                AgentRole.PHYSIOLOGY_EXPERT.value,
-                AgentRole.ACTIVITY_EXPERT.value,
-            ],
+            "agents": [AgentRole.METRICS_EXPERT.value, AgentRole.PHYSIOLOGY_EXPERT.value, AgentRole.ACTIVITY_EXPERT.value],
             "result_keys": ["metrics_outputs", "physiology_outputs", "activity_outputs"],
             "next_node": "synthesis",
-            "display_name": "Analysis",
+            "display_name": "Analysis"
         },
         "season_planning": {
             "agents": [AgentRole.SEASON_PLANNER.value],
             "result_keys": ["season_plan"],
             "next_node": "data_integration",
-            "display_name": "Season Planning",
+            "display_name": "Season Planning"
         },
         "weekly_planning": {
             "agents": [AgentRole.WORKOUT.value],
             "result_keys": ["weekly_plan"],
             "next_node": "plan_formatter",
-            "display_name": "Weekly Planning",
-        },
+            "display_name": "Weekly Planning"
+        }
     }
 
-    def __init__(self, interaction_provider: InteractionProvider = None):
+    def __init__(self, interaction_provider: InteractionProvider | None = None):
         self.interaction_provider = interaction_provider or ConsoleInteractionProvider()
 
     def __call__(self, state: TrainingAnalysisState) -> Command:
         stage = self._detect_stage(state)
         config = self.STAGES[stage]
 
-        logger.info(f"MasterOrchestrator: Processing {config['display_name']} stage")
+        logger.info("MasterOrchestrator: Processing %s stage", config["display_name"])
 
         all_questions = self._collect_questions(state, config["result_keys"], config["agents"])
 
         if not all_questions:
             if stage == "analysis":
                 if state.get("skip_synthesis", False):
-                    logger.info(
-                        "MasterOrchestrator: skip_synthesis=True, proceeding directly to season_planner"
-                    )
+                    logger.info("MasterOrchestrator: skip_synthesis=True, proceeding directly to season_planner")
                     return Command(goto="season_planner", update={"synthesis_complete": True})
                 else:
-                    logger.info(
-                        "MasterOrchestrator: No questions found, proceeding to synthesis and season_planner"
-                    )
+                    logger.info("MasterOrchestrator: No questions found, proceeding to synthesis and season_planner")
                     return Command(goto=["synthesis", "season_planner"])
             else:
                 logger.info(
-                    f"MasterOrchestrator: No questions found, proceeding to {config['next_node']}"
+                    "MasterOrchestrator: No questions found, proceeding to %s",
+                    config["next_node"],
                 )
                 return Command(goto=config["next_node"])
 
@@ -103,9 +99,9 @@ class MasterOrchestrator:
             logger.info("MasterOrchestrator: HITL disabled, skipping questions")
             return Command(goto=config["next_node"])
 
-        logger.info(f"MasterOrchestrator: Found {len(all_questions)} questions, initiating HITL")
+        logger.info("MasterOrchestrator: Found %s questions, initiating HITL", len(all_questions))
 
-        answers = self.interaction_provider.collect_answers(all_questions, config["display_name"])
+        answers = self.interaction_provider.collect_answers(all_questions, str(config["display_name"]))
 
         agent_qa_updates = self._create_agent_specific_qa_messages(all_questions, answers)
 
@@ -118,10 +114,14 @@ class MasterOrchestrator:
                 agents_to_reinvoke.append(agent_role)
 
         logger.info(
-            f"MasterOrchestrator: Re-invoking {agents_to_reinvoke} with agent-specific Q&A messages"
+            "MasterOrchestrator: Re-invoking %s with agent-specific Q&A messages",
+            agents_to_reinvoke,
         )
 
-        return Command(goto=agents_to_reinvoke, update=agent_qa_updates)
+        return Command(
+            goto=agents_to_reinvoke,
+            update=agent_qa_updates
+        )
 
     def _detect_stage(self, state: TrainingAnalysisState) -> str:
         if state.get("synthesis_complete"):
@@ -131,7 +131,10 @@ class MasterOrchestrator:
         return "analysis"
 
     def _collect_questions(
-        self, state: TrainingAnalysisState, result_keys: list[str], agent_names: list[str]
+        self,
+        state: TrainingAnalysisState,
+        result_keys: list[str] | Sequence[str],
+        agent_names: list[str] | Sequence[str]
     ) -> list[dict]:
         all_questions = []
 
@@ -154,17 +157,25 @@ class MasterOrchestrator:
             if questions:
                 for q in questions:
                     question_dict = q.model_dump() if hasattr(q, "model_dump") else q
-                    all_questions.append({"agent": agent_name, "question": question_dict})
+                    all_questions.append({
+                        "agent": agent_name,
+                        "question": question_dict
+                    })
                 logger.debug(
-                    f"Collected {len(questions)} questions from {result_key} (agent: {agent_name})"
+                    "Collected %s questions from %s (agent: %s)",
+                    len(questions),
+                    result_key,
+                    agent_name,
                 )
 
         return all_questions
 
     def _create_agent_specific_qa_messages(
-        self, questions: list[dict], answers: list[dict]
+        self,
+        questions: list[dict],
+        answers: list[dict]
     ) -> dict:
-        updates = {}
+        updates: dict[str, list[AIMessage | HumanMessage]] = {}
 
         for qa_item, answer_item in zip(questions, answers, strict=True):
             agent_name = qa_item["agent"]
@@ -179,9 +190,10 @@ class MasterOrchestrator:
             if field_name not in updates:
                 updates[field_name] = []
 
-            updates[field_name].extend(
-                [AIMessage(content=f"{question}"), HumanMessage(content=answer)]
-            )
+            updates[field_name].extend([
+                AIMessage(content=f"{question}"),
+                HumanMessage(content=answer)
+            ])
 
         return updates
 

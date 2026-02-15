@@ -12,5 +12,6 @@ class AgentOutput(BaseModel):
     """Agent produces EITHER questions for HITL OR content for downstream consumers."""
 
     output: list[Question] | str = Field(
-        ..., description="EITHER questions for HITL OR complete output for downstream consumers"
+        ...,
+        description="EITHER questions for HITL OR complete output for downstream consumers"
     )
