@@ -16,6 +16,7 @@ from .models import (
     ExtractionConfig,
     GarminData,
     HeartRateZone,
+    HeatAltitudeAcclimatization,
     PhysiologicalMarkers,
     RecoveryIndicators,
     TrainingStatus,
@@ -321,6 +322,7 @@ class TriathlonCoachDataExtractor(DataExtractor):
                     "training_status": self.get_training_status(mend),
                     "vo2_max_history": self.get_vo2_max_history(mstart, mend),
                     "training_load_history": self.get_training_load_history(mstart, mend),
+                    "heat_altitude_acclimatization": self.get_heat_altitude_acclimatization(mstart, mend),
                 }
             )
 
@@ -1207,3 +1209,69 @@ class TriathlonCoachDataExtractor(DataExtractor):
             sample_dates.append(current_date)
             current_date -= timedelta(days=interval_days)
         return sample_dates
+
+    def get_heat_altitude_acclimatization(
+        self, start_date: date, end_date: date
+    ) -> list[HeatAltitudeAcclimatization]:
+        """
+        Get heat and altitude acclimatization data for a date range.
+
+        Args:
+            start_date: Start date for the range
+            end_date: End date for the range
+
+        Returns:
+            List of HeatAltitudeAcclimatization objects
+        """
+        try:
+            logger.info(
+                "Fetching heat/altitude acclimatization from %s to %s", start_date, end_date
+            )
+            raw_data = self.garmin.get_heat_altitude_acclimatization(
+                start_date.isoformat(), end_date.isoformat()
+            )
+
+            if not isinstance(raw_data, list):
+                logger.warning(
+                    "Heat/altitude acclimatization data is not a list: %s", type(raw_data)
+                )
+                return []
+
+            processed_data: list[HeatAltitudeAcclimatization] = []
+            for entry in raw_data:
+                if not isinstance(entry, dict):
+                    continue
+
+                processed_data.append(
+                    HeatAltitudeAcclimatization(
+                        date=entry.get("calendarDate"),
+                        altitude_acclimatization=_to_float(entry.get("altitudeAcclimation")),
+                        previous_altitude_acclimatization=_to_float(
+                            entry.get("previousAltitudeAcclimation")
+                        ),
+                        heat_acclimatization_percentage=_to_float(
+                            entry.get("heatAcclimationPercentage")
+                        ),
+                        previous_heat_acclimatization_percentage=_to_float(
+                            entry.get("previousHeatAcclimationPercentage")
+                        ),
+                        altitude_trend=entry.get("altitudeTrend"),
+                        heat_trend=entry.get("heatTrend"),
+                        current_altitude=_to_float(entry.get("currentAltitude")),
+                        previous_altitude=_to_float(entry.get("previousAltitude")),
+                        acclimatization_percentage=_to_float(entry.get("acclimationPercentage")),
+                        previous_acclimatization_percentage=_to_float(
+                            entry.get("previousAcclimationPercentage")
+                        ),
+                        altitude_acclimatization_timestamp=entry.get(
+                            "altitudeAcclimationLocalTimestamp"
+                        ),
+                    )
+                )
+
+            logger.info("Collected %d heat/altitude acclimatization entries", len(processed_data))
+            return processed_data
+
+        except Exception:
+            logger.exception("Error fetching heat/altitude acclimatization data")
+            return []
