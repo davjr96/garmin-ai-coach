@@ -145,6 +145,7 @@ class ChatbotService:
             messages=messages,
             tools=self.tools,
             max_iterations=8,
+            base_llm=self.llm,
         )
 
         # Extract text content from response

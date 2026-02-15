@@ -35,6 +35,7 @@ SEASON_PLANNER_USER_PROMPT = """Create a STRATEGIC, HIGH-LEVEL season plan (12-2
 - Athlete: {athlete_name}
 - Date: ```json {current_date} ```
 - Competitions: ```json {competitions} ```
+- **User Context**: ``` {planning_context} ```
 
 ## Expert Insights
 ### Metrics
@@ -114,6 +115,7 @@ async def season_planner_node(state: TrainingAnalysisState) -> dict[str, list | 
             metrics_insights=extract_expert_output(state.get("metrics_outputs"), "for_season_planner"),
             activity_insights=extract_expert_output(state.get("activity_outputs"), "for_season_planner"),
             physiology_insights=extract_expert_output(state.get("physiology_outputs"), "for_season_planner"),
+            planning_context=state["planning_context"],
         ) + (f"\n\n## Existing Season Plan\nWe have an existing season plan. Do NOT start from scratch. Review this plan against the new expert insights. If the plan is still valid, maintain the phase structure and just refine the details. Only trigger a full replan if the new data suggests the old plan is dangerously off-track.\n\n```markdown\n{existing_season_plan}\n```" if existing_season_plan else "")},
     ]
 

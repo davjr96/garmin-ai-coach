@@ -44,7 +44,11 @@ def extract_text_content(response) -> str:
 
 
 async def handle_tool_calling_in_node(
-    llm_with_tools, messages: list[dict[str, str]], tools: list, max_iterations: int = 5
+    llm_with_tools,
+    messages: list[dict[str, str]],
+    tools: list,
+    max_iterations: int = 5,
+    base_llm=None,
 ):
     conversation: list[Any] = [
         {"role": msg["role"], "content": msg["content"]}
@@ -105,4 +109,22 @@ async def handle_tool_calling_in_node(
             return response
 
     logger.warning("Max iterations (%s) reached in tool calling", max_iterations)
-    return response
+
+    # Force a final text response by calling LLM without tools bound
+    try:
+        conversation.append(
+            {"role": "user", "content": (
+                "You have used all available tool calls. Based on the information you have "
+                "gathered so far, please provide your best answer now. Do not call any more tools."
+            )}
+        )
+        # Use base_llm if provided, otherwise try to unwrap from the tools-bound LLM
+        fallback_llm = base_llm
+        if fallback_llm is None:
+            fallback_llm = getattr(llm_with_tools, "bound", llm_with_tools)
+        final_response = await fallback_llm.ainvoke(conversation)
+        logger.info("Generated final response after max iterations")
+        return final_response
+    except Exception as e:
+        logger.error("Failed to generate final response after max iterations: %s", e)
+        return response

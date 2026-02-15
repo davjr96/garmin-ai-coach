@@ -977,7 +977,14 @@ class TriathlonCoachDataExtractor(DataExtractor):
         logger.debug("Fetching training status for date: %s", date_obj.isoformat())
         raw_data = self._training_status_cached(date_obj.isoformat())
 
+        if not raw_data:
+            logger.warning("Training status API returned empty data for %s", date_obj.isoformat())
+            return TrainingStatus(
+                vo2_max={"value": None, "date": None},
+                acute_training_load={"acute_load": None, "chronic_load": None, "acwr": None},
+            )
 
+        logger.debug("Training status response keys for %s: %s", date_obj.isoformat(), list(raw_data.keys()))
 
         most_recent_vo2max = raw_data.get("mostRecentVO2Max")
         vo2max_data = _dg(most_recent_vo2max, "generic", {}) if isinstance(most_recent_vo2max, dict) else None
@@ -985,25 +992,39 @@ class TriathlonCoachDataExtractor(DataExtractor):
         if vo2max_data:
             logger.debug("Found VO2Max data: %s", vo2max_data)
         else:
-            logger.warning("mostRecentVO2Max generic data absent")
-
-        status = _deep_get(raw_data, ["mostRecentTrainingStatus", "latestTrainingStatusData"], {}) or {}
-        status_key = next(iter(status), None) if isinstance(status, dict) and status else None
-        status_data = status.get(status_key, {}) if status_key and isinstance(status, dict) else {}
-
-        if status_key is None:
-            logger.warning("No status key found in latestTrainingStatusData")
-        else:
-            logger.debug("Found status key: %s", status_key)
+            logger.debug(
+                "mostRecentVO2Max generic data absent for %s (available keys: %s)",
+                date_obj.isoformat(),
+                list(most_recent_vo2max.keys()) if isinstance(most_recent_vo2max, dict) else type(most_recent_vo2max).__name__,
+            )
 
         vo2max_value = _to_float(_dg(vo2max_data, "vo2MaxValue")) if vo2max_data else None
         vo2max_date = _dg(vo2max_data, "calendarDate") if vo2max_data else None
         if vo2max_value is not None or vo2max_date is not None:
             logger.debug("VO2Max value: %s, date: %s", vo2max_value, vo2max_date)
 
+        status = _deep_get(raw_data, ["mostRecentTrainingStatus", "latestTrainingStatusData"], {}) or {}
+        status_key = next(iter(status), None) if isinstance(status, dict) and status else None
+        status_data = status.get(status_key, {}) if status_key and isinstance(status, dict) else {}
+
+        if status_key is None:
+            logger.debug(
+                "No status key in latestTrainingStatusData for %s (mostRecentTrainingStatus keys: %s)",
+                date_obj.isoformat(),
+                list(raw_data.get("mostRecentTrainingStatus", {}).keys())
+                if isinstance(raw_data.get("mostRecentTrainingStatus"), dict)
+                else "absent",
+            )
+            return TrainingStatus(
+                vo2_max={"value": vo2max_value, "date": vo2max_date},
+                acute_training_load={"acute_load": None, "chronic_load": None, "acwr": None},
+            )
+
+        logger.debug("Found status key: %s", status_key)
+
         atl_dto = _dg(status_data, "acuteTrainingLoadDTO", None)
         if not isinstance(atl_dto, dict):
-            logger.warning("acuteTrainingLoadDTO missing or invalid (type=%s)", type(atl_dto).__name__)
+            logger.debug("acuteTrainingLoadDTO absent in status data (type=%s)", type(atl_dto).__name__)
             acute_load = chronic_load = acwr = None
         else:
             acute_load = _to_float(atl_dto.get("dailyTrainingLoadAcute"))

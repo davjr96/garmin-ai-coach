@@ -102,7 +102,11 @@ def create_analysis_query_tool(context: dict[str, Any]):
 
 
 def _matches_query(value: Any, query_lower: str) -> bool:
-    """Check if value contains the query string.
+    """Check if value contains the query terms.
+
+    Matches if all individual terms (2+ chars) appear in the value,
+    or if the full query appears as a substring. This allows queries like
+    "HRV baseline" to match content containing both words separately.
 
     Args:
         value: Value to search in
@@ -112,12 +116,22 @@ def _matches_query(value: Any, query_lower: str) -> bool:
         True if value matches query
     """
     if isinstance(value, str):
-        return query_lower in value.lower()
+        value_lower = value.lower()
     elif isinstance(value, (list, dict)):
-        value_str = json.dumps(value, ensure_ascii=False).lower()
-        return query_lower in value_str
+        value_lower = json.dumps(value, ensure_ascii=False).lower()
     else:
-        return query_lower in str(value).lower()
+        value_lower = str(value).lower()
+
+    # First try exact substring match
+    if query_lower in value_lower:
+        return True
+
+    # Fall back to matching all individual terms (words 2+ chars)
+    terms = [t for t in query_lower.split() if len(t) >= 2]
+    if terms and all(term in value_lower for term in terms):
+        return True
+
+    return False
 
 
 def _format_result(domain: str, output_type: str, field_name: str, field_value: Any) -> str:
