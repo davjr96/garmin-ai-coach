@@ -30,6 +30,8 @@ class LangGraphPlottingTool:
 
             ⚠️ IMPORTANT LIMITS: Maximum 2 plots per agent. Use plotting only for insights
             that provide unique value beyond what's available in the Garmin app.
+            ⚠️ DO NOT test this tool with dummy/sample data. Every call counts toward your
+            2-plot limit. Use real training data from the analysis on your first call.
 
             REQUIRED PARAMETERS:
             - python_code: Complete Python script that creates a 'fig' variable

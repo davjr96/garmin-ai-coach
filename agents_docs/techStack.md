@@ -9,9 +9,9 @@
 ## AI & LLM Providers
 
 ### Supported Models
-- **Anthropic Claude** - claude-sonnet-4, claude-opus-4, claude-3-haiku (with extended thinking support)
+- **Anthropic Claude** - claude-sonnet-4.6, claude-4, claude-opus, claude-3-haiku (with extended thinking and 1M context support)
 - **OpenAI** - gpt-5, gpt-5.2-pro, gpt-5-mini, gpt-5-search, gpt-5.2-pro-search (with web search), gpt-4o, o1, o3, o4-mini
-- **OpenRouter/DeepSeek** - deepseek-chat, deepseek-r1, deepseek-v3.2-exp (with reasoning support)
+- **Google AI Studio** - gemini-2.5-pro, gemini-2.5-flash (with thinking budget support)
 
 ### Model Assignment Strategy
 
@@ -30,10 +30,10 @@ The system uses a **role-based model assignment strategy** that optimizes model 
 - **Synthesis & Coordination**: Uses **high-fidelity models** to ensure consistent, high-quality final outputs.
 
 **Operation Modes:**
-- **STANDARD (Production)**: Balances reasoning depth with performance, utilizing "thinking" models for complex tasks and faster models for formatting.
-- **COST_EFFECTIVE**: Prioritizes budget-friendly models (e.g., smaller, faster variants) across all nodes.
-- **DEVELOPMENT**: optimized for fast iteration and testing cycles.
-- **PRO**: Maximum performance mode using GPT-5.2 Pro with web search for expert nodes (metrics, physiology, activity) and planners (season, weekly), with standard GPT-5.2 for other nodes. ⚠️ **High cost mode** (>$10 per run depending on data volume).
+- **STANDARD (Production)**: Balances reasoning depth with performance using GPT-5 with web search for experts/planners.
+- **COST_EFFECTIVE**: Prioritizes budget-friendly models (claude-3-haiku) across all nodes.
+- **DEVELOPMENT**: Optimized for fast iteration using claude-sonnet-4.6 for most roles and gemini-2.5-flash for summarizers.
+- **PRO**: Maximum performance mode using GPT-5.2 Pro with web search for expert nodes and planners, with standard GPT-5 for other nodes. ⚠️ **High cost mode** (>$10 per run depending on data volume).
 
 ### AI Orchestration & Observability
 - **LangGraph 1.0+** - State-based workflow orchestration ✅ **ACTIVE**

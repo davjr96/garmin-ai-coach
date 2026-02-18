@@ -78,15 +78,30 @@ def create_data_summarizer_node(
 
             data_to_summarize = data_extractor(state)
 
+            formatted_data = json.dumps(data_to_summarize, indent=2)
+
             async def call_llm():
                 response = await ModelSelector.get_llm(agent_role).ainvoke(
                     [
-                        {"role": "system", "content": effective_system_prompt},
+                        {
+                            "role": "system",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": effective_system_prompt,
+                                    "cache_control": {"type": "ephemeral"},
+                                },
+                            ],
+                        },
                         {
                             "role": "user",
-                            "content": effective_user_prompt.format(
-                                data=json.dumps(data_to_summarize, indent=2)
-                            ),
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": effective_user_prompt.format(data=formatted_data),
+                                    "cache_control": {"type": "ephemeral"},
+                                },
+                            ],
                         },
                     ]
                 )

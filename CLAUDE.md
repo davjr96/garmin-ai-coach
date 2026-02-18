@@ -53,10 +53,11 @@ pixi run dead-code
 ## AI Configuration & Provider System
 
 ### AI Modes
-The system uses three AI modes that determine model assignments and data extraction scope:
-- `development` — Fast iteration (7-14 days data, claude-opus models)
-- `standard` — Production quality (21-56 days data, gpt-5 models)
-- `cost_effective` — Budget-conscious (7-14 days data, claude-3-haiku models)
+The system uses five AI modes that determine model assignments:
+- `development` — Fast iteration (gemini-2.5-flash for summarizers, claude-sonnet-4.6 for experts/planners)
+- `standard` — Production quality (gpt-5 / gpt-5-search models)
+- `cost_effective` — Budget-conscious (claude-3-haiku models)
+- `pro` — Maximum performance (gpt-5.2-pro-search for experts/planners, gpt-5 for others)
 
 ### Model Assignment Strategy
 Model selection is **role-based** via `services/ai/ai_settings.py:19-55`. The `AISettings` class maps each `AgentRole` to a specific model ID for each `AIMode`.
@@ -71,13 +72,13 @@ Model selection is **role-based** via `services/ai/ai_settings.py:19-55`. The `A
 2. `AISettings.get_model_for_role(role)` retrieves the model ID for the current mode
 3. `ModelSelector.get_llm(role)` (model_config.py:72-135) creates the LLM client:
    - Reads model config from `CONFIGURATIONS`
-   - Auto-selects API key based on `base_url` (anthropic/openrouter/openai)
+   - Auto-selects API key based on `base_url` (anthropic/openai/google)
    - Applies model-specific configs (thinking modes, reasoning params)
 
 **Supported Models:**
-- OpenAI: gpt-5, gpt-5-mini, gpt-4o, o1, o3, o4-mini
-- Anthropic: claude-4, claude-opus, claude-3-haiku (with optional extended thinking)
-- OpenRouter: deepseek-chat, deepseek-reasoner, gemini-2.5-pro, grok-4
+- OpenAI: gpt-5, gpt-5-mini, gpt-5.2-pro, gpt-4o, gpt-4.1, gpt-4.5, gpt-4o-mini, o1, o3, o3-mini, o4-mini (with optional web search and Responses API)
+- Anthropic: claude-sonnet-4.6, claude-4, claude-opus, claude-3-haiku (with optional extended thinking and 1M context)
+- Google AI Studio: gemini-2.5-pro, gemini-2.5-flash (with configurable thinking budget)
 
 ## Architecture
 
@@ -214,7 +215,7 @@ context:
 extraction:
   activities_days: 21      # Activity data lookback (7-56)
   metrics_days: 56         # Metrics data lookback (14-90)
-  ai_mode: "standard"      # development | standard | cost_effective
+  ai_mode: "standard"      # development | standard | cost_effective | pro
   hitl_enabled: true       # Enable conversational agents (default: true)
   skip_synthesis: false    # Skip synthesis stage to save tokens (default: false)
 
@@ -237,7 +238,7 @@ credentials:
 # LLM Providers (at least one required)
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
-OPENROUTER_API_KEY=...
+GOOGLE_API_KEY=...
 
 # Observability (optional but recommended)
 LANGSMITH_API_KEY=lsv2_...

@@ -6,7 +6,9 @@ from functools import wraps
 from typing import Any
 
 import anthropic
+import openai
 from anthropic._exceptions import DeadlineExceededError, OverloadedError, ServiceUnavailableError
+from google.api_core.exceptions import ResourceExhausted, ServiceUnavailable, TooManyRequests
 from langgraph.errors import GraphInterrupt
 
 logger = logging.getLogger(__name__)
@@ -45,6 +47,13 @@ class RetryConfig:
             OverloadedError,  # 529 - overloaded
             anthropic.APIConnectionError,  # Network/connection issues
             anthropic.APITimeoutError,  # Timeouts
+            openai.RateLimitError,  # 429 - OpenAI rate limits
+            openai.APIConnectionError,  # Network/connection issues
+            openai.APITimeoutError,  # Timeouts
+            openai.InternalServerError,  # 5xx - server errors
+            ResourceExhausted,  # 429 - Google API rate limits
+            TooManyRequests,  # 429 - Google API rate limits
+            ServiceUnavailable,  # 503 - Google API unavailable
             APIOverloadError,  # Custom local exception
         }
 

@@ -8,7 +8,32 @@ from langgraph.errors import GraphInterrupt
 logger = logging.getLogger(__name__)
 
 
+def _check_truncation(response) -> None:
+    """Log a warning if the LLM response was truncated due to max output tokens."""
+    metadata = getattr(response, "response_metadata", None)
+    if not metadata or not isinstance(metadata, dict):
+        return
+
+    # Anthropic: stop_reason, OpenAI: finish_reason, Google: finish_reason
+    finish_reason = metadata.get("finish_reason") or metadata.get("stop_reason") or ""
+    finish_reason = finish_reason.lower()
+
+    # "stop" / "end_turn" = normal completion; anything else may indicate truncation
+    truncation_indicators = {"max_tokens", "length", "max_output_tokens"}
+    if finish_reason in truncation_indicators:
+        usage = metadata.get("usage", metadata.get("token_usage", {}))
+        output_tokens = usage.get("output_tokens") or usage.get("completion_tokens") or "unknown"
+        logger.warning(
+            "LLM response was TRUNCATED (finish_reason=%s, output_tokens=%s). "
+            "Output may be incomplete — consider increasing max_output_tokens.",
+            finish_reason,
+            output_tokens,
+        )
+
+
 def extract_text_content(response) -> str:
+    _check_truncation(response)
+
     if hasattr(response, "content_blocks"):
         try:
             blocks = response.content_blocks

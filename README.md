@@ -11,7 +11,7 @@
 [![Powered by LangGraph](https://img.shields.io/badge/Powered%20by-LangGraph-purple.svg)](https://langchain-ai.github.io/langgraph/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Providers:** OpenAI, Anthropic, and OpenRouter (DeepSeek/Gemini/Grok via OpenRouter).
+**Providers:** OpenAI, Anthropic, and Google AI Studio.
 
 > Not affiliated with Garmin. Not medical advice.
 
@@ -164,7 +164,7 @@ Set at least one provider API key (e.g. in `.env`):
 
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
-- `OPENROUTER_API_KEY` (DeepSeek/Gemini/Grok, and can also act as a fallback router)
+- `GOOGLE_API_KEY`
 
 The run’s `ai_mode` comes from `extraction.ai_mode` (the CLI exports it to `AI_MODE` internally).
 

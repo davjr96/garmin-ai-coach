@@ -25,7 +25,7 @@ class Config:
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
     deepseek_api_key: str | None = None
-    openrouter_api_key: str | None = None
+    google_api_key: str | None = None
 
     ai_mode: AIMode = AIMode.STANDARD
 
@@ -34,7 +34,7 @@ class Config:
         anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         openai_api_key = os.getenv("OPENAI_API_KEY")
         deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-        openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+        google_api_key = os.getenv("GOOGLE_API_KEY")
 
         ai_mode_str = os.getenv("AI_MODE", "standard").lower()
         try:
@@ -54,7 +54,7 @@ class Config:
             ai_mode=ai_mode,
             openai_api_key=openai_api_key,
             deepseek_api_key=deepseek_api_key,
-            openrouter_api_key=openrouter_api_key,
+            google_api_key=google_api_key,
         )
 
 

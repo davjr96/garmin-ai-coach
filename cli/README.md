@@ -159,7 +159,7 @@ Generated files (in output.directory, default `./data`):
 Set at least one provider API key in your environment (e.g., `.env`):
 - OPENAI_API_KEY=...
 - ANTHROPIC_API_KEY=...
-- OPENROUTER_API_KEY=...
+- GOOGLE_API_KEY=...
 - Optional: LANGSMITH_API_KEY=... for observability
 
 The CLI will set `AI_MODE` from your config’s `extraction.ai_mode` (see [`python.run_analysis_from_config()`](../cli/garmin_ai_coach_cli.py:110) where `AI_MODE` is exported at [`os.environ['AI_MODE'] = ai_mode`](../cli/garmin_ai_coach_cli.py:125)).
@@ -167,13 +167,13 @@ The CLI will set `AI_MODE` from your config’s `extraction.ai_mode` (see [`pyth
 Provider selection depends on AI mode mapping:
 - Default mapping in [`services/ai/ai_settings.py`](../services/ai/ai_settings.py:24) within [`python.AISettings()`](../services/ai/ai_settings.py:19):
   - `standard` → `gpt-5` / `gpt-5-search` (OpenAI, with web search for experts/planners)
-  - `development` → `claude-4` (Anthropic)
+  - `development` → `claude-sonnet-4.6` + `gemini-2.5-flash` (Anthropic + Google)
   - `cost_effective` → `claude-3-haiku` (Anthropic)
-  - `pro` → `gpt-5-search` / `gpt-5.2-pro-search` (OpenAI, with gpt-5.2-pro-search for experts and planners)
+  - `pro` → `gpt-5` / `gpt-5.2-pro-search` (OpenAI, with gpt-5.2-pro-search for experts and planners)
     - ⚠️ **WARNING**: PRO mode can incur high costs (>$10 per run depending on data volume and configuration)
 - Model IDs and providers are declared in [`python.ModelSelector.CONFIGURATIONS`](../services/ai/model_config.py:22), and the provider API key is auto-selected in [`python.ModelSelector.get_llm()`](../services/ai/model_config.py:61).
 
 Practical guidance:
 - If you ONLY set `OPENAI_API_KEY`, set `extraction.ai_mode: "standard"` (maps to OpenAI by default), or edit `stage_models` in [`services/ai/ai_settings.py`](../services/ai/ai_settings.py:24) to assign an OpenAI model (e.g., `gpt-4o`, `gpt-5-mini`, `gpt-5.2-pro`) to your preferred mode.
 - If you ONLY set `ANTHROPIC_API_KEY`, use `extraction.ai_mode: "development"` or `"cost_effective"` (default Anthropic mapping), or update the mapping accordingly.
-- For OpenRouter/DeepSeek, map your chosen mode to a model key defined in [`python.ModelSelector.CONFIGURATIONS`](../services/ai/model_config.py:22).
+- For Google AI Studio models, set `GOOGLE_API_KEY` and use a mode that maps to Gemini models (e.g., `development`).
