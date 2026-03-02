@@ -4,7 +4,6 @@ from typing import Any
 
 from langchain_anthropic import ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
 
 from core.config import get_config
 
@@ -25,71 +24,12 @@ class ModelSelector:
     def _detect_provider(base_url: str) -> str:
         if "anthropic" in base_url:
             return "anthropic"
-        elif "openai.com" in base_url:
-            return "openai"
         elif "googleapis.com" in base_url:
             return "google"
         else:
             return "unknown"
 
     CONFIGURATIONS: dict[str, ModelConfiguration] = {
-        # OpenAI Models
-        "gpt-4o": ModelConfiguration(
-            name="gpt-4o",
-            base_url="https://api.openai.com/v1",
-        ),
-        "gpt-4.1": ModelConfiguration(
-            name="gpt-4.1",
-            base_url="https://api.openai.com/v1",
-        ),
-        "gpt-4.5": ModelConfiguration(
-            name="gpt-4.5-preview",
-            base_url="https://api.openai.com/v1",
-        ),
-        "gpt-4o-mini": ModelConfiguration(
-            name="gpt-4o-mini",
-            base_url="https://api.openai.com/v1",
-        ),
-        "o1": ModelConfiguration(
-            name="o1-preview",
-            base_url="https://api.openai.com/v1",
-        ),
-        "o1-mini": ModelConfiguration(
-            name="o1-mini",
-            base_url="https://api.openai.com/v1",
-        ),
-        "o3": ModelConfiguration(
-            name="o3",
-            base_url="https://api.openai.com/v1",
-        ),
-        "o3-mini": ModelConfiguration(
-            name="o3-mini",
-            base_url="https://api.openai.com/v1",
-        ),
-        "o4-mini": ModelConfiguration(
-            name="o4-mini",
-            base_url="https://api.openai.com/v1",
-        ),
-        "gpt-5": ModelConfiguration(
-            name="gpt-5.2",
-            base_url="https://api.openai.com/v1",
-        ),
-        "gpt-5.2-pro": ModelConfiguration(
-            name="gpt-5.2-pro",
-            base_url="https://api.openai.com/v1",
-        ),
-        "gpt-5-mini": ModelConfiguration(
-            name="gpt-5-mini",
-            base_url="https://api.openai.com/v1",
-        ),
-        "gpt-5-search": ModelConfiguration(
-            name="gpt-5.2",
-            base_url="https://api.openai.com/v1",
-        ),
-        "gpt-5.2-pro-search": ModelConfiguration(
-            name="gpt-5.2-pro",
-            base_url="https://api.openai.com/v1",
-        ),
         # Anthropic Models
         "claude-4": ModelConfiguration(
             name="claude-sonnet-4-5-20250929",
@@ -128,6 +68,10 @@ class ModelSelector:
             name="gemini-2.5-flash",
             base_url="https://generativelanguage.googleapis.com",
         ),
+        "gemini-3-flash-direct": ModelConfiguration(
+            name="gemini-3-flash-preview",
+            base_url="https://generativelanguage.googleapis.com",
+        ),
     }
 
     MODEL_CONFIGS: dict[str, dict[str, Any]] = {
@@ -160,47 +104,13 @@ class ModelSelector:
             "max_tokens": 32000,
             "log": "Using extended output tokens for {role} (max_tokens: 32000)",
         },
-        "gpt-5": {
-            "use_responses_api": True,
-            "reasoning": {"effort": "xhigh"},
-            "model_kwargs": {"text": {"verbosity": "high"}},
-            "log": "Using GPT-5 with Responses API for {role} (verbosity: high, reasoning_effort: xhigh)",
-        },
-        "gpt-5.2-pro": {
-            "use_responses_api": True,
-            "reasoning": {"effort": "xhigh"},
-            "model_kwargs": {"text": {"verbosity": "high"}},
-            "log": "Using GPT-5.2 Pro with Responses API for {role} (verbosity: high, reasoning_effort: xhigh)",
-        },
-        "gpt-5-mini": {
-            "use_responses_api": True,
-            "reasoning": {"effort": "high"},
-            "model_kwargs": {"text": {"verbosity": "high"}},
-            "log": "Using GPT-5-mini with Responses API for {role} (verbosity: high, reasoning_effort: high)",
-        },
-        "gpt-5-search": {
-            "use_responses_api": True,
-            "reasoning": {"effort": "xhigh"},
-            "model_kwargs": {
-                "text": {"verbosity": "high"},
-                "tools": [{"type": "web_search"}],
-                "include": ["web_search_call.action.sources"],
-            },
-            "log": "Using GPT-5.2 with web search + Responses API for {role} (verbosity: high, reasoning_effort: xhigh)",
-        },
-        "gpt-5.2-pro-search": {
-            "use_responses_api": True,
-            "reasoning": {"effort": "xhigh"},
-            "model_kwargs": {
-                "text": {"verbosity": "high"},
-                "tools": [{"type": "web_search"}],
-                "include": ["web_search_call.action.sources"],
-            },
-            "log": "Using GPT-5.2 Pro with web search + Responses API for {role} (verbosity: high, reasoning_effort: xhigh)",
-        },
         "gemini-2.5-flash-direct": {
             "thinking_budget": 0,
             "log": "Using Gemini 2.5 Flash for {role} (thinking disabled, max_output: 65536)",
+        },
+        "gemini-3-flash-direct": {
+            "thinking_budget": 0,
+            "log": "Using Gemini 3 Flash Preview for {role} (thinking disabled, max_output: 65536)",
         },
         "gemini-2.5-pro-direct": {
             "thinking_budget": 8192,
@@ -246,14 +156,12 @@ class ModelSelector:
             cls._apply_model_config(model_name, role, google_params)
             return ChatGoogleGenerativeAI(**google_params)
 
-        key_map = {
-            "anthropic": config.anthropic_api_key,
-            "openai": config.openai_api_key,
-        }
+        if provider != "anthropic":
+            raise RuntimeError(f"Unsupported provider '{provider}' for model '{model_name}'")
 
-        api_key = key_map.get(provider)
+        api_key = config.anthropic_api_key
         if not api_key:
-            raise RuntimeError(f"{provider.upper()}_API_KEY is required for {provider.title()} models")
+            raise RuntimeError("ANTHROPIC_API_KEY is required for Anthropic models")
 
         logger.info("Configuring LLM for role %s with model %s", role.value, final_model_name)
 
@@ -261,8 +169,4 @@ class ModelSelector:
 
         cls._apply_model_config(model_name, role, llm_params)
 
-        if provider == "anthropic":
-            return ChatAnthropic(**llm_params)
-
-        llm_params["base_url"] = base_url
-        return ChatOpenAI(**llm_params)
+        return ChatAnthropic(**llm_params)

@@ -23,15 +23,15 @@ class AISettings:
     model_assignments: dict[AIMode, dict[AgentRole, str]] = field(
         default_factory=lambda: {
             AIMode.STANDARD: {
-                AgentRole.SUMMARIZER: "gpt-5",
-                AgentRole.FORMATTER: "gpt-5",
-                AgentRole.METRICS_EXPERT: "gpt-5-search",
-                AgentRole.PHYSIOLOGY_EXPERT: "gpt-5-search",
-                AgentRole.ACTIVITY_EXPERT: "gpt-5-search",
-                AgentRole.SYNTHESIS: "gpt-5",
-                AgentRole.WORKOUT: "gpt-5-search",
-                AgentRole.SEASON_PLANNER: "gpt-5-search",
-                AgentRole.CHATBOT: "gpt-5",
+                AgentRole.SUMMARIZER: "gemini-3-flash-direct",
+                AgentRole.FORMATTER: "claude-sonnet-4.6",
+                AgentRole.METRICS_EXPERT: "claude-sonnet-4.6",
+                AgentRole.PHYSIOLOGY_EXPERT: "claude-sonnet-4.6",
+                AgentRole.ACTIVITY_EXPERT: "claude-sonnet-4.6",
+                AgentRole.SYNTHESIS: "claude-sonnet-4.6",
+                AgentRole.WORKOUT: "claude-sonnet-4.6",
+                AgentRole.SEASON_PLANNER: "claude-sonnet-4.6",
+                AgentRole.CHATBOT: "claude-sonnet-4.6",
             },
             AIMode.COST_EFFECTIVE: {
                 AgentRole.SUMMARIZER: "claude-3-haiku",
@@ -45,7 +45,7 @@ class AISettings:
                 AgentRole.CHATBOT: "claude-3-haiku",
             },
             AIMode.DEVELOPMENT: {
-                AgentRole.SUMMARIZER: "gemini-2.5-flash-direct",
+                AgentRole.SUMMARIZER: "gemini-3-flash-direct",
                 AgentRole.FORMATTER: "claude-sonnet-4.6",
                 AgentRole.METRICS_EXPERT: "claude-sonnet-4.6",
                 AgentRole.PHYSIOLOGY_EXPERT: "claude-sonnet-4.6",
@@ -56,15 +56,15 @@ class AISettings:
                 AgentRole.CHATBOT: "claude-sonnet-4.6",
             },
             AIMode.PRO: {
-                AgentRole.SUMMARIZER: "gpt-5",
-                AgentRole.FORMATTER: "gpt-5",
-                AgentRole.METRICS_EXPERT: "gpt-5.2-pro-search",
-                AgentRole.PHYSIOLOGY_EXPERT: "gpt-5.2-pro-search",
-                AgentRole.ACTIVITY_EXPERT: "gpt-5.2-pro-search",
-                AgentRole.SYNTHESIS: "gpt-5-search",
-                AgentRole.WORKOUT: "gpt-5.2-pro-search",
-                AgentRole.SEASON_PLANNER: "gpt-5.2-pro-search",
-                AgentRole.CHATBOT: "gpt-5.2-pro-search",
+                AgentRole.SUMMARIZER: "gemini-3-flash-direct",
+                AgentRole.FORMATTER: "claude-sonnet-4.6",
+                AgentRole.METRICS_EXPERT: "claude-opus",
+                AgentRole.PHYSIOLOGY_EXPERT: "claude-opus",
+                AgentRole.ACTIVITY_EXPERT: "claude-opus",
+                AgentRole.SYNTHESIS: "claude-opus",
+                AgentRole.WORKOUT: "claude-opus",
+                AgentRole.SEASON_PLANNER: "claude-opus",
+                AgentRole.CHATBOT: "claude-opus",
             },
         }
     )

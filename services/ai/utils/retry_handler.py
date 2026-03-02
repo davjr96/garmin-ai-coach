@@ -1,17 +1,25 @@
 import asyncio
 import logging
 import random
+import re
 from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import Any
 
 import anthropic
-import openai
 from anthropic._exceptions import DeadlineExceededError, OverloadedError, ServiceUnavailableError
 from google.api_core.exceptions import ResourceExhausted, ServiceUnavailable, TooManyRequests
 from langgraph.errors import GraphInterrupt
 
 logger = logging.getLogger(__name__)
+
+
+def _get_suggested_retry_delay(exc: Exception) -> float | None:
+    """Extract the retry delay seconds hint from a Google ResourceExhausted error."""
+    match = re.search(r"retry_delay\s*\{\s*seconds:\s*(\d+)", str(exc))
+    if match:
+        return float(match.group(1))
+    return None
 
 
 class RetryableError(Exception):
@@ -47,10 +55,6 @@ class RetryConfig:
             OverloadedError,  # 529 - overloaded
             anthropic.APIConnectionError,  # Network/connection issues
             anthropic.APITimeoutError,  # Timeouts
-            openai.RateLimitError,  # 429 - OpenAI rate limits
-            openai.APIConnectionError,  # Network/connection issues
-            openai.APITimeoutError,  # Timeouts
-            openai.InternalServerError,  # 5xx - server errors
             ResourceExhausted,  # 429 - Google API rate limits
             TooManyRequests,  # 429 - Google API rate limits
             ServiceUnavailable,  # 503 - Google API unavailable
@@ -102,6 +106,15 @@ async def retry_with_backoff(
 
             if attempt < config.max_retries:
                 delay = config.calculate_delay(attempt)
+                suggested = _get_suggested_retry_delay(e)
+                if suggested is not None and suggested > delay:
+                    logger.info(
+                        "%s using Google-suggested retry delay of %.1fs (backoff was %.1fs)",
+                        context,
+                        suggested,
+                        delay,
+                    )
+                    delay = suggested
                 logger.info(
                     "%s failed (attempt %s), retrying in %.1fs: %s",
                     context,

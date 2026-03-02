@@ -9,6 +9,7 @@ import os
 import sys
 from dataclasses import asdict
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any
 
@@ -88,6 +89,9 @@ class ConfigParser:
 
     def get_output_directory(self) -> Path:
         return Path(self.config.get("output", {}).get("directory", "./data"))
+
+    def get_timezone(self) -> str:
+        return self.config.get("athlete", {}).get("timezone", "UTC") or "UTC"
 
     def get_password(self) -> str:
         return self.config.get("credentials", {}).get("password", "") or getpass.getpass(
@@ -184,6 +188,7 @@ async def run_analysis_from_config(config_path: Path) -> None:
     athlete_name, email = config_parser.get_athlete_info()
     analysis_context, planning_context = config_parser.get_contexts()
     extraction_settings = config_parser.get_extraction_config()
+    athlete_tz = ZoneInfo(config_parser.get_timezone())
 
     competitions = config_parser.get_competitions()
     outside_competitions = fetch_outside_competitions_from_config(config_parser.config)
@@ -216,12 +221,13 @@ async def run_analysis_from_config(config_path: Path) -> None:
             metrics_range=extraction_settings["metrics_days"],
             include_detailed_activities=True,
             include_metrics=True,
+            timezone=str(athlete_tz),
         )
 
         garmin_data = extractor.extract_data(extraction_config)
         logger.info("Data extraction completed")
 
-        now = datetime.now()
+        now = datetime.now(athlete_tz)
         plotting_enabled = extraction_settings.get("enable_plotting", False)
         hitl_enabled = extraction_settings.get("hitl_enabled", True)
         skip_synthesis = extraction_settings.get("skip_synthesis", False)

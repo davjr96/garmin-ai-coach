@@ -18,16 +18,18 @@ Objectively describe the athlete's recent training activities.
 - Use transparent compression for long tails (summarize repetitive patterns with windows or ranges).
 
 ## Required Structure
-1. **All Activities Table**: compact table for every activity (date, type, duration, distance, elevation, avg HR, avg pace/power).
+1. **All Activities Table**: compact table for every activity (date, type, duration, distance/sets, avg HR).
 2. **Key Sessions**: deep dives ONLY for key sessions (intensity/novelty/anomaly).
-3. **Zone Distributions**: summarize distributions in tables.
+3. **Zone Distributions**: summarize HR zone distributions in tables (endurance activities only).
 
 ## Input Data
 ```json
 {data}
 ```
 
-## Key Session Template
+## Key Session Templates
+
+### Endurance Activity (run, bike, ski, swim, etc.)
 # Activity: [Date - Type]
 
 ## Overview
@@ -39,7 +41,24 @@ Objectively describe the athlete's recent training activities.
 ## Lap Details
 | Lap | Dist | Time | Pace | Avg HR | Max HR | ... |
 |-----|------|------|------|--------|--------|-----|
-| 1   | ...  | ...  | ...  | ...    | ...    | ... |"""
+| 1   | ...  | ...  | ...  | ...    | ...    | ... |
+
+### Strength Training Activity
+# Activity: [Date - Strength Training]
+
+## Overview
+* Duration: [time]
+* Total Sets: [count]
+* Avg HR: [HR] | Calories: [cal]
+
+## Exercise Sets
+Group consecutive sets of the same exercise. For each exercise group:
+
+| Exercise | Sets | Reps | Weight (kg) | Avg Rest (s) |
+|----------|------|------|-------------|--------------|
+| ...      | ...  | ...  | ...         | ...          |
+
+List exercises in the order they were performed. Use exact reps and weights from the data."""
 
 
 def extract_activity_data(state: TrainingAnalysisState) -> dict:

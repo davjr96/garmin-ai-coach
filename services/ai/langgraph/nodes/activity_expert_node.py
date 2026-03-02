@@ -37,10 +37,16 @@ ACTIVITY_EXPERT_USER_PROMPT = """## Task
 Interpret activity summaries to identify patterns and guidance.
 
 ## Constraints
-- Focus on **session-level execution** (pace, power, HR, structure).
+- Focus on **session-level execution** (pace, power, HR, structure for endurance; exercise selection, volume, load progression for strength).
 - Do NOT explain global load (Metrics Expert's job).
 - Do NOT propose future schedules (Planner's job).
 - Focus on **"what this specific workout does to the system"**.
+- For **strength sessions**: analyse exercise selection relative to the athlete's goals, sets/reps/weight progression across sessions, muscle group balance, and functional relevance (e.g. calf raises, split squats, single-leg RDLs, and weighted hill climbs for trail running durability). Weighted hill climbs (backpack-loaded uphill walking/running) are a mountain-sport-specific muscular endurance session — treat them as a hybrid strength/endurance stimulus, not a standard run.
+  - **Key benchmarks for mountain athletes**: squat ≥ body weight, pull-ups ≥ 12 reps, plank ≥ 1 minute with perfect form. Flag if the athlete is consistently below these.
+  - **"Mountain strong ≠ gym strong"**: strength work should build functional capacity without appreciable muscle mass gain. Flag if exercise selection or loading appears oriented toward hypertrophy (e.g. heavy isolated lifts, very low rep maximal sets without endurance context) rather than functional, high-rep endurance strength.
+  - Assess ME progression trend: note whether load and volume are increasing, plateauing, or regressing across recent sessions. Do not assert a specific workout number — describe the observed trajectory.
+- For **trail running sessions**: classify each session by type — aerobic easy, hill sprints (≤15s maximal efforts on steep grade, power development), muscular endurance intervals (Z3/Z4 sustained uphill), downhill intervals (anterior chain/quad stimulus), or race-specific. Downhill running targets different muscle groups than uphill or flat running and should be tracked and assessed separately. Note the absence of downhill work if the athlete is preparing for a technical or hilly race.
+- For **ski/snow sports sessions**: distinguish ski touring or uphilling (aerobic, high cardiovascular load, closely transferable to mountain running) from resort alpine/downhill skiing (eccentric leg loading, more anaerobic and technical). Note the cardiovascular fitness transfer from skiing. Critically, flag the musculoskeletal adaptation gap: after a ski season, tendons, bones, and connective tissue may lag significantly behind cardiovascular fitness — abrupt high-volume running following ski season is a primary injury risk. Track the ski-to-run ratio across the analysis window and flag if running volume is low or absent during an active ski period.
 
 ## Inputs
 ### Activity Summary
@@ -73,7 +79,8 @@ Produce 3 structured fields. For EACH field, use this internal layout:
 - **Context**: This informs **Immediate Scheduling & Constraints** (Mesocycle).
 - **Goal**: Provide actionable rules for the next block.
 - **Freedom**: define constraints, opportunities, and session load hints as needed.
-- **CRITICAL**: Do NOT propose a schedule. Provide rules and building blocks."""
+- **CRITICAL**: Do NOT propose a schedule. Provide rules and building blocks.
+- **Strength Baseline** (required if any strength sessions exist): In `evidence`, include one entry per exercise with the exact format: `"[Exercise]: [sets]x[reps] @ [weight]kg — [date]"`. In `implications`, include one progressive overload target per exercise: `"[Exercise] next session: aim for [sets]x[reps] @ [weight]kg (e.g. +1 rep or +1-2kg if last set felt easy)"`. The weekly planner will use these directly to prescribe weights in the plan."""
 
 ACTIVITY_FINAL_CHECKLIST = """
 ## Final Checklist

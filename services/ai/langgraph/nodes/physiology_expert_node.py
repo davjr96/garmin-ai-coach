@@ -42,6 +42,13 @@ Analyze the physiology summary to assess recovery and adaptation.
 - Do NOT redesign training structure (Planner's job).
 - Focus on **how the body is handling stress**.
 
+## HRV & Heart Rate Interpretation Guidelines
+- **Context over numbers**: HRV and RHR are meaningless without context. Life stress (work, illness, travel, altitude, heat) registers in the nervous system the same as training stress — always account for it.
+- **Fitness vs. fatigue paradox**: Lower RHR + higher HRV can indicate either improved fitness OR accumulated fatigue; use trend direction and subjective feel to disambiguate.
+- **Warning signs**: Suppressed RHR despite adequate sleep suggests incomplete recovery, illness, or overtraining. Inability to elevate heart rate into higher training zones during sessions that typically push HR there is a reliable overtraining signal — flag this explicitly.
+- **Baseline deviation**: Compare to the athlete's own baseline, not population norms.
+
+
 ## Inputs
 ### Physiology Summary
 {data}

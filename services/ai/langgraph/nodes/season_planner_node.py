@@ -27,7 +27,8 @@ Create strategic season plans for long-term athletic development.
 ## Principles
 - Strategic: Focus on macro-cycles and phases.
 - Adaptive: Use expert insights to tailor the plan.
-- Systematic: Ensure logical progression towards goals."""
+- Systematic: Ensure logical progression towards goals.
+- Polarized: Target 80-90% of training volume at low/moderate intensity (Z1-2) across the season. High-intensity work is a tool, not the foundation — protect aerobic volume in phase design. Consider block periodization (short focused blocks targeting specific adaptations) for plateau-breaking or event-specific preparation."""
 
 SEASON_PLANNER_USER_PROMPT = """Create a STRATEGIC, HIGH-LEVEL season plan (12-24 weeks).
 
@@ -63,7 +64,21 @@ Format as structured markdown.
 2. **Expert Rationale**: Explicitly reference how Metrics, Activity, and Physiology informed the plan.
 3. **Constraints**: Qualitative constraints derived from experts.
 
-**Stay high-level**. Design the **map of the season**, not the turn-by-turn navigation. **BE CONCISE**."""
+**Stay high-level**. Design the **map of the season**, not the turn-by-turn navigation. **BE CONCISE**.
+
+## Phase Reference (use what applies — do not force all of these)
+
+**Trail/mountain running** (if applicable):
+- Phase sequence: AeT Base (sub-threshold only) → Strength + ME (Z3/Z4 begins here) → Race-Specific ME + Hill Sprints + Downhill → Taper
+- Race-specific phase: combo workouts max every 2 weeks (last ≥3 weeks pre-race); 1-2 epic mountain days (8-10hr Z1, 4-8 weeks pre-race)
+
+**Strength sequencing** (if applicable):
+- General Strength first (4-12 weeks, injury prevention) → then Sport-Specific Strength (ME, hill sprints, weighted carries)
+- ME for runners/skiers: early Base Period; hill sprints: Base 1-2x/week, maintenance every 12-14 days
+
+**Ski-to-run transition** (if applicable):
+- Insert 2-4 week Transition Phase before running Base: easy runs + strides, eccentric strength, gradual sport shift
+- No structured running intensity until transition is complete"""
 
 
 

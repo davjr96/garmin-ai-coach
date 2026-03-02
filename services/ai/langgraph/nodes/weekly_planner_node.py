@@ -67,7 +67,21 @@ Create a detailed 28-day (4-week) training plan.
 **Important:**
 - Use recent activity data to continue the current training flow and don't start a new phase.
 - Use the Season Plan as a guide, but don't force it.
-- place sessions smartly to avoid back to back high intensity sessions or strength sessions etc.
+- Place sessions smartly to avoid back to back high intensity sessions or strength sessions etc.
+- **Intensity distribution**: For recreational/amateur athletes, limit to **1 high-intensity session per week** (sustained Z4+ efforts: intervals, tempo, threshold). Elite athletes may handle 2-3. The remaining volume should be Z1-2 (80-90% of total training). Violating this balance is the most common mistake — protect aerobic volume. **Exception**: hill sprints (≤10s maximal efforts) are a neuromuscular/power stimulus, not a metabolic load — they do not count toward the high-intensity session cap and can be added to easy days.
+- **Double-threshold sessions** (advanced, race-specific phase only): back-to-back threshold efforts on consecutive days (e.g. threshold intervals day 1, tempo run day 2). Each day counts as one high-intensity session — only use for athletes who can sustain 2+ high-intensity sessions per week (i.e. not recreational/amateur). Use sparingly and only when physiology signals strong readiness.
+- **Strength sessions**: Always prescribe specific exercises, sets, reps, and weights. Use the "Strength Baseline" and progressive overload targets from the Activity Expert. Format as: `Exercise: Nxreps @ Xkg`. If no baseline exists, use bodyweight or note "start light."
+  - ME gym sessions require **7-10 days recovery** — do not schedule more frequently.
+  - When building from scratch, progress load every 1-2 sessions: start bodyweight 4×10, add ~10% BW every few sessions, increase reps before load, reduce rest intervals as fitness improves. Do not push to failure.
+- **Trail-specific session formats** (when applicable to the athlete's sport):
+  - Hill sprints (power, steep): `8x(10" max, 20%+ grade, 3' walk r)` — short, maximal, full recovery; not a cardio session. During Base Period: 1-2x/week. Outside Base Period (maintenance): every 12-14 days. Progression: steeper grade or add 10% BW via weight vest.
+  - Hill intervals (muscular endurance, moderate grade): `5x(2' hard uphill, 6-8% grade, easy jog down r)` — build from 10 min to 20 min total uphill work over weeks; excellent VO2max stimulus with lower injury risk than flat running
+  - Downhill intervals (anterior chain): `6x(3' controlled descent, >20% grade, 2' r)` — quad/eccentric focus; max every 2-3 weeks; requires easy days before and after
+  - Muscular endurance uphill: `3x(10' Z3 uphill, 3' r)` or `4x(5' Z4, 2' r)` — sustained effort, not sprints
+  - Long run with embedded tempo: 3-4 hour run; after 20-30 min warm-up, insert 20 min continuous tempo OR `3x(8' tempo, 5' r)`; prefer this over 5-6+ hour slow runs (diminishing returns beyond 3-4 hours)
+  - Combo workout (fatigue resistance): `5x(90" hill, easy 5') → 20' tempo` or similar hill+tempo sequences; max every 2 weeks in final 3 months pre-race; schedule last combo session ≥3 weeks before race
+  - Epic mountain day (simulation): 8-10 hours entirely Z1; schedule 1-2 times in the build (4-8 weeks pre-race); use to test gear, shoes, and nutrition strategy; full easy day before and after
+- **Ski-to-run transition** (when athlete is balancing ski season with running): During active ski season, preserve 1-2 short runs per week to maintain running-specific neuromuscular patterns; add strides (4-6x20s fast, relaxed) to at least one run per week. When transitioning out of ski season, replace ski days with run days gradually over 2-4 weeks rather than abruptly. Delay high-volume downhill running or hard intensity until 2-4 weeks of consistent run volume is re-established — cardiovascular fitness transfers well from skiing but tendons and connective tissue require dedicated adaptation time.
 """
 
 WEEKLY_PLANNER_FINAL_CHECKLIST = """

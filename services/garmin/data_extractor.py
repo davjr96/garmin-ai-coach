@@ -3,6 +3,7 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable, Iterable, Iterator, Mapping, MutableMapping
 from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from typing import Any, TypeVar
 
 import requests
@@ -157,7 +158,8 @@ class DataExtractor:
 
     @staticmethod
     def get_date_ranges(config: ExtractionConfig) -> dict[str, dict[str, date]]:
-        end_date = date.today()
+        tz = ZoneInfo(getattr(config, "timezone", "UTC") or "UTC")
+        end_date = datetime.now(tz).date()
         act_days = max(0, int(getattr(config, "activities_range", 21) or 21))
         met_days = max(0, int(getattr(config, "metrics_range", 56) or 56))
         lt_days = max(0, int(getattr(config, "long_term_range", 360) or 360))
@@ -415,6 +417,33 @@ class TriathlonCoachDataExtractor(DataExtractor):
         )
 
     # --------- Activities ---------
+
+    def get_activity_exercise_sets(self, activity_id: int) -> list[dict[str, Any]]:
+        raw = self._call_api(
+            self.garmin.client.get_activity_exercise_sets,
+            activity_id,
+            default={},
+            what=f"get_activity_exercise_sets({activity_id})",
+        ) or {}
+        sets = raw.get("exerciseSets") or []
+        processed: list[dict[str, Any]] = []
+        for s in sets:
+            if not isinstance(s, dict):
+                continue
+            exercises = s.get("exercises") or []
+            processed.append({
+                "setType": s.get("setType"),
+                "exercises": [
+                    {"category": e.get("category"), "name": e.get("name")}
+                    for e in exercises
+                    if isinstance(e, dict)
+                ],
+                "reps": _to_int(s.get("repetitionCount")),
+                "weightKg": _round((s.get("weight") or 0) / 1000.0, 2) if s.get("weight") is not None else None,
+                "durationSecs": _round(s.get("duration"), 1),
+                "startTime": s.get("startTime"),
+            })
+        return processed
 
     def get_activity_laps(self, activity_id: int) -> list[dict[str, Any]]:
         splits = self._call_api(
@@ -702,6 +731,10 @@ class TriathlonCoachDataExtractor(DataExtractor):
             weather_out = None if activity_type == "meditation" else self._extract_weather_data(weather_data)
             laps_out = [] if activity_type == "meditation" else lap_data
 
+            exercise_sets_out = None
+            if activity_type == "strength_training":
+                exercise_sets_out = self.get_activity_exercise_sets(activity_id)
+
             return Activity(
                 activity_id=activity_id,
                 activity_type=activity_type,
@@ -710,6 +743,7 @@ class TriathlonCoachDataExtractor(DataExtractor):
                 summary=summary,
                 weather=weather_out,
                 laps=laps_out,
+                exercise_sets=exercise_sets_out,
             )
         except Exception:
             logger.exception("Error processing single sport activity")
@@ -878,28 +912,6 @@ class TriathlonCoachDataExtractor(DataExtractor):
             what="get_body_composition"
         )
 
-        processed_hydration_data: list[dict[str, Any]] = []
-        for cur in _daterange(start_date, end_date):
-            entry: dict[str, Any] | None = self._call_api(
-                self.garmin.client.get_hydration_data,
-                cur.isoformat(),
-                default={},
-                what=f"get_hydration_data({cur})"
-            )
-            if not entry:
-                continue
-            goal_ml = _to_float(entry.get("goalInML"))
-            value_ml = _to_float(entry.get("valueInML"))
-            sweat_loss_ml = _to_float(entry.get("sweatLossInML"))
-            processed_hydration_data.append(
-                {
-                    "date": entry.get("calendarDate") or cur.isoformat(),
-                    "goal": _round((goal_ml or 0) / 1000.0, 2) if goal_ml is not None else None,
-                    "intake": _round((value_ml or 0) / 1000.0, 2) if value_ml is not None else None,
-                    "sweat_loss": _round((sweat_loss_ml or 0) / 1000.0, 2) if sweat_loss_ml is not None else None,
-                }
-            )
-
         processed_weight_data: list[dict[str, Any]] = []
         for entry in _dg(weight_data, "dateWeightList", []) or []:
             if not isinstance(entry, dict):
@@ -919,7 +931,6 @@ class TriathlonCoachDataExtractor(DataExtractor):
 
         return BodyMetrics(
             weight={"data": processed_weight_data, "average": average_weight},
-            hydration=processed_hydration_data,
         )
 
     def get_recovery_indicators(self, start_date: date, end_date: date) -> list[RecoveryIndicators]:

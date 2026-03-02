@@ -22,6 +22,7 @@ class ExtractionConfig:
     include_long_term_trends: bool = True
     long_term_range: int = TimeRange.LONG_TERM_RANGE.value
     long_term_interval: int = TimeRange.LONG_TERM_INTERVAL.value
+    timezone: str = "UTC"
 
 
 @dataclass
@@ -127,6 +128,7 @@ class Activity:
     weather: WeatherData | None = None
     hr_zones: list[HeartRateZone] | None = None
     laps: list[dict[str, Any]] | None = None  # Complex structure, keeping as Dict for now
+    exercise_sets: list[dict[str, Any]] | None = None  # Strength training exercise sets
 
 
 @dataclass
@@ -139,7 +141,6 @@ class PhysiologicalMarkers:
 @dataclass
 class BodyMetrics:
     weight: dict[str, Any] | None = None  # Complex nested structure with historical data
-    hydration: list[dict[str, Any]] | None = None  # Complex structure with daily data
 
 
 @dataclass
