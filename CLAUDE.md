@@ -53,11 +53,11 @@ pixi run dead-code
 ## AI Configuration & Provider System
 
 ### AI Modes
-The system uses five AI modes that determine model assignments:
-- `development` — Fast iteration (gemini-2.5-flash for summarizers, claude-sonnet-4.6 for experts/planners)
-- `standard` — Production quality (gpt-5 / gpt-5-search models)
-- `cost_effective` — Budget-conscious (claude-3-haiku models)
-- `pro` — Maximum performance (gpt-5.2-pro-search for experts/planners, gpt-5 for others)
+The system uses four AI modes that determine model assignments:
+- `development` — Fast iteration (gemini-3-flash-preview for summarizers, claude-sonnet-4.6 for experts/planners)
+- `standard` — Production quality (same as development)
+- `cost_effective` — Budget-conscious (same model split as standard)
+- `pro` — Maximum performance (gemini-3-flash-preview for summarizers, claude-opus for experts/planners)
 
 ### Model Assignment Strategy
 Model selection is **role-based** via `services/ai/ai_settings.py:19-55`. The `AISettings` class maps each `AgentRole` to a specific model ID for each `AIMode`.
@@ -76,9 +76,8 @@ Model selection is **role-based** via `services/ai/ai_settings.py:19-55`. The `A
    - Applies model-specific configs (thinking modes, reasoning params)
 
 **Supported Models:**
-- OpenAI: gpt-5, gpt-5-mini, gpt-5.2-pro, gpt-4o, gpt-4.1, gpt-4.5, gpt-4o-mini, o1, o3, o3-mini, o4-mini (with optional web search and Responses API)
-- Anthropic: claude-sonnet-4.6, claude-4, claude-opus, claude-3-haiku (with optional extended thinking and 1M context)
-- Google AI Studio: gemini-2.5-pro, gemini-2.5-flash (with configurable thinking budget)
+- Anthropic: claude-sonnet-4.6 (64K tokens, 1M context beta), claude-sonnet-4.6-thinking, claude-opus, claude-3-haiku
+- Google AI Studio (direct): gemini-3-flash-preview, gemini-2.5-pro, gemini-2.5-flash
 
 ## Architecture
 
@@ -207,6 +206,7 @@ def some_expert_node(state):
 athlete:
   name: "Athlete Name"
   email: "email@example.com"  # Required
+  timezone: "Europe/Paris"    # Optional — defaults to UTC
 
 context:
   analysis: "Past data interpretation context (injuries, priorities, etc.)"

@@ -9,9 +9,8 @@
 ## AI & LLM Providers
 
 ### Supported Models
-- **Anthropic Claude** - claude-sonnet-4.6, claude-4, claude-opus, claude-3-haiku (with extended thinking and 1M context support)
-- **OpenAI** - gpt-5, gpt-5.2-pro, gpt-5-mini, gpt-5-search, gpt-5.2-pro-search (with web search), gpt-4o, o1, o3, o4-mini
-- **Google AI Studio** - gemini-2.5-pro, gemini-2.5-flash (with thinking budget support)
+- **Anthropic Claude** - claude-sonnet-4.6 (64K tokens, 1M context), claude-sonnet-4.6-thinking, claude-opus, claude-3-haiku
+- **Google AI Studio** - gemini-3-flash-preview, gemini-2.5-pro, gemini-2.5-flash (direct API via `ChatGoogleGenerativeAI`)
 
 ### Model Assignment Strategy
 
@@ -30,17 +29,17 @@ The system uses a **role-based model assignment strategy** that optimizes model 
 - **Synthesis & Coordination**: Uses **high-fidelity models** to ensure consistent, high-quality final outputs.
 
 **Operation Modes:**
-- **STANDARD (Production)**: Balances reasoning depth with performance using GPT-5 with web search for experts/planners.
-- **COST_EFFECTIVE**: Prioritizes budget-friendly models (claude-3-haiku) across all nodes.
-- **DEVELOPMENT**: Optimized for fast iteration using claude-sonnet-4.6 for most roles and gemini-2.5-flash for summarizers.
-- **PRO**: Maximum performance mode using GPT-5.2 Pro with web search for expert nodes and planners, with standard GPT-5 for other nodes. ⚠️ **High cost mode** (>$10 per run depending on data volume).
+- **DEVELOPMENT**: Fast iteration — `gemini-3-flash-preview` for summarizers, `claude-sonnet-4.6` for experts/planners/formatter.
+- **STANDARD**: Production quality — same as development (Gemini 3 Flash summarizers + Claude Sonnet 4.6 experts).
+- **COST_EFFECTIVE**: Budget-conscious — same model split as standard.
+- **PRO**: Maximum performance — `gemini-3-flash-preview` for summarizers, `claude-opus` for experts/planners. ⚠️ **High cost mode** (>$10 per run depending on data volume).
 
 ### AI Orchestration & Observability
-- **LangGraph 1.0+** - State-based workflow orchestration ✅ **ACTIVE**
-- **LangSmith 0.4.37+** - AI observability and cost tracking ✅ **ACTIVE**
+- **LangGraph 1.0+** - State-based workflow orchestration
+- **LangSmith 0.4.37+** - AI observability and cost tracking
 - **LangChain 1.0+** - LLM framework and tool integrations
 - **LangChain-Anthropic 1.0+** - Anthropic Claude integration
-- **LangChain-OpenAI 1.0+** - OpenAI integration
+- **LangChain-Google-GenAI** - Google AI Studio direct integration
 - **LangChain-Community 0.4+** - Community tools and integrations
 
 ## Core Dependencies

@@ -39,11 +39,12 @@ Open the generated reports:
 
 ## ✨ What You Get
 
-- KPI dashboard: chronic/acute load, ACWR, HRV, sleep RHR, weight trend
+- KPI dashboard: chronic/acute load, ACWR, HRV, sleep, RHR, weight trend
 - Running execution analysis: progression evidence + coaching insights
-- Physiology & readiness: baseline profiling + crash signature detection
-- Actionable recommendations grouped by domain (load, running, cycling, recovery)
-- Season strategy (typically 12–24 weeks) + compact 4-week plan (28 days)
+- Strength training analysis: exercise baseline tracking, progressive overload targets, functional benchmarks
+- Physiology & readiness: HRV interpretation, baseline profiling, heat/altitude acclimatization awareness
+- Actionable recommendations grouped by domain (load, running, strength, recovery)
+- Season strategy (typically 12–24 weeks) + compact 4-week plan (28 days) with sport-specific session formats
 - Optional: HITL questions (`hitl_enabled: true`)
 - Optional: competition import from Outside (BikeReg/RunReg/TriReg/SkiReg)
 - Optional: LangSmith tracing + cost tracking (`LANGSMITH_API_KEY`)
@@ -110,6 +111,7 @@ Minimal example:
 athlete:
   name: "Your Name"
   email: "you@example.com"
+  timezone: "Europe/London"    # Optional — defaults to UTC
 
 context:
   analysis: "Recovering from injury; focus on base building"
