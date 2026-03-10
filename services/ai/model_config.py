@@ -48,15 +48,15 @@ class ModelSelector:
             base_url="https://api.anthropic.com",
         ),
         "claude-opus": ModelConfiguration(
-            name="claude-opus-4-1-20250805",
+            name="claude-opus-4-6",
             base_url="https://api.anthropic.com",
         ),
         "claude-opus-thinking": ModelConfiguration(
-            name="claude-opus-4-1-20250805",
+            name="claude-opus-4-6",
             base_url="https://api.anthropic.com",
         ),
-        "claude-3-haiku": ModelConfiguration(
-            name="claude-3-haiku-20240307",
+        "claude-haiku-4-5": ModelConfiguration(
+            name="claude-haiku-4-5-20251001",
             base_url="https://api.anthropic.com",
         ),
         # Google AI Studio Models (direct)

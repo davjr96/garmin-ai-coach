@@ -48,13 +48,15 @@ class CostTracker:
 
     def _normalize_model_name(self, model_name: str) -> str:
         name_mappings = {
-            "claude-3-7-sonnet-20250224": "claude-3-7-sonnet",
-            "claude-4-opus-20250522": "claude-4-opus",
-            "claude-opus-4-1-20250805": "claude-opus-4-1-20250805",
-            "claude-4-sonnet-20250514": "claude-4-sonnet",
-            "anthropic:claude-3-7-sonnet": "claude-3-7-sonnet",
-            "anthropic:claude-4-opus": "claude-opus-4-1-20250805",
-            "anthropic:claude-4-sonnet": "claude-4-sonnet",
+            # Anthropic — strip any date suffixes returned by the API
+            "claude-sonnet-4-6": "claude-sonnet-4-6",
+            "claude-opus-4-6": "claude-opus-4-6",
+            "claude-haiku-4-5-20251001": "claude-haiku-4-5-20251001",
+            "claude-sonnet-4-5-20250929": "claude-sonnet-4-5-20250929",
+            # Google — pass through as-is (already match pricing keys)
+            "gemini-3-flash-preview": "gemini-3-flash-preview",
+            "gemini-2.5-flash": "gemini-2.5-flash",
+            "gemini-2.5-pro": "gemini-2.5-pro",
         }
         return name_mappings.get(model_name, model_name)
 
