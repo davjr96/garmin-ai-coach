@@ -1,4 +1,4 @@
-[project]
+[workspace]
 name = "garmin-ai-coach"
 version = "2.2.0"
 description = "CLI tool for Garmin data analysis with AI-powered insights"
@@ -14,7 +14,9 @@ pre-commit = ">=4.3.0,<5"
 [pypi-dependencies]
 # Install the project itself in editable mode
 garmin-ai-coach = { path = ".", editable = true }
-garminconnect = ">=0.2.30, <0.3"
+garminconnect = { git = "https://github.com/cyberjunky/python-garminconnect.git", branch = "master" }
+curl_cffi = ">=0.6"
+ua-generator = ">=1.0"
 anthropic = ">=0.71.0, <0.72"
 pydantic = ">=2.12, <3"
 pydantic-settings = ">=2.0, <3"
